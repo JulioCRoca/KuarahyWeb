@@ -673,7 +673,11 @@
         if (client && mqttConnected) {
             return;
         }
-
+        if (demoActive) {
+        clearInterval(demoInterval);
+        demoInterval = null;
+        demoActive = false;
+        }
         const clientId = "kuarahy_web_" + Math.random().toString(16).substring(2, 10);
 
         client = mqtt.connect(MQTT_BROKER, {
@@ -882,35 +886,40 @@
     // =============================
 
     function toggleDemo() {
-        demoActive = !demoActive;
-
-        if (demoActive) {
-            setMQTTText("MQTT: modo demo activo", "warn");
-
-            let t = 0;
-            demoInterval = setInterval(() => {
-                t += 0.5;
-
-                const base = t < 12 ? 3.2 : 5.1;
-                const noise = (Math.random() - 0.5) * 0.35;
-                const voltaje = Math.max(0, base + noise);
-                const potencia = (voltaje * voltaje) / RL;
-                const adc = Math.round((voltaje / 48.1) * 4095);
-
-                processIncomingData({
-                    voltaje,
-                    potencia,
-                    adc,
-                    estadoPanel: "conectado",
-                    tiempo: t
-                });
-            }, 500);
-        } else {
-            clearInterval(demoInterval);
-            demoInterval = null;
-            setMQTTStatus(mqttConnected);
-        }
+    if (mqttConnected) {
+        alert("No se puede activar el modo demo mientras MQTT está conectado. Desconecta MQTT o usa solo datos reales del ESP32.");
+        return;
     }
+
+    demoActive = !demoActive;
+
+    if (demoActive) {
+        setMQTTText("MQTT: modo demo activo", "warn");
+
+        let t = 0;
+        demoInterval = setInterval(() => {
+            t += 0.5;
+
+            const base = t < 12 ? 3.2 : 5.1;
+            const noise = (Math.random() - 0.5) * 0.35;
+            const voltaje = Math.max(0, base + noise);
+            const potencia = (voltaje * voltaje) / RL;
+            const adc = Math.round((voltaje / 48.1) * 4095);
+
+            processIncomingData({
+                voltaje,
+                potencia,
+                adc,
+                estadoPanel: "conectado",
+                tiempo: t
+            });
+        }, 500);
+    } else {
+        clearInterval(demoInterval);
+        demoInterval = null;
+        setMQTTStatus(mqttConnected);
+    }
+}
 
     // =============================
     // ACTUALIZACIÓN VISUAL
