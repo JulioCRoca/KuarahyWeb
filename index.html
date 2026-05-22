@@ -175,15 +175,24 @@
             margin-bottom: 16px;
             color: #2b1a00;
         }
+.chart-box {
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+}
 
-        .chart-box {
-            min-height: 430px;
-        }
+.chart-container {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 440px;
+}
 
-        canvas {
-            width: 100% !important;
-            height: 330px !important;
-        }
+.chart-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
 
         .controls {
             display: grid;
@@ -436,10 +445,13 @@
     </section>
 
     <section class="grid layout">
-        <div class="card chart-box">
-            <h2 class="panel-title">Potencia del panel vs tiempo</h2>
-            <canvas id="powerChart"></canvas>
-        </div>
+       <div class="card chart-box">
+    <h2 class="panel-title">Potencia del panel vs tiempo</h2>
+
+    <div class="chart-container">
+        <canvas id="powerChart"></canvas>
+    </div>
+</div>
 
         <div class="card">
             <h2 class="panel-title">Control de prueba</h2>
