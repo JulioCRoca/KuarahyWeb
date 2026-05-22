@@ -446,6 +446,7 @@
 
             <div class="controls">
                 <button onclick="connectMQTT()">Conectar MQTT</button>
+                <button class="secondary" onclick="disconnectMQTT()">Desconectar MQTT</button>
                 <button class="green" onclick="startTest()">Iniciar prueba</button>
                 <button onclick="captureInitial()">Registrar condición inicial</button>
                 <button onclick="captureFinal()">Registrar condición final</button>
@@ -718,7 +719,20 @@
             }
         });
     }
+function disconnectMQTT() {
+    if (client) {
+        client.end(true);  // Cierra la conexión MQTT y evita reconexión automática
+        client = null;
+    }
 
+    mqttConnected = false;
+
+    setMQTTStatus(false);
+    setPanelText("Panel: sin datos recientes", "warn");
+    setTestText("MQTT desconectado");
+
+    console.log("MQTT desconectado manualmente");
+}
     function publishCommand(command) {
         if (!client || !mqttConnected) return;
 
