@@ -288,7 +288,8 @@
             color: #68470b;
             font-weight: 700;
         }
-@media (max-width: 980px) {
+
+        @media (max-width: 980px) {
             .cards,
             .layout,
             .comparison,
@@ -381,7 +382,7 @@
             color: #5f4210;
             font-weight: 600;
         }
-             </style>
+    </style>
 </head>
 
 <body>
@@ -885,13 +886,11 @@
     // =============================
 
     function toggleDemo() {
-        console.log("mqttConnected =", mqttConnected);
-        console.log("demoActive =", demoActive);
-
     if (mqttConnected) {
         alert("No se puede activar el modo demo mientras MQTT está conectado. Desconecta MQTT o usa solo datos reales del ESP32.");
         return;
     }
+
     demoActive = !demoActive;
 
     if (demoActive) {
