@@ -451,7 +451,7 @@
                 <button onclick="captureFinal()">Registrar condición final</button>
                 <button class="secondary" onclick="finishTest()">Finalizar prueba</button>
                 <button class="danger" onclick="resetData()">Reiniciar datos</button>
-                <button class="secondary" onclick="toggleDemo()">Modo demo</button>
+                <button id="btnDemo" class="secondary" onclick="toggleDemo()">Modo demo</button>
             </div>
 
             <div class="formula">
@@ -973,13 +973,29 @@
         }
     }
 
-    function setMQTTStatus(connected) {
-        if (connected) {
-            setMQTTText("MQTT: conectado", "ok");
-        } else {
-            setMQTTText("MQTT: desconectado", "warn");
+   function setMQTTStatus(connected) {
+    const btnDemo = document.getElementById("btnDemo");
+
+    if (connected) {
+        setMQTTText("MQTT: conectado", "ok");
+
+        if (btnDemo) {
+            btnDemo.disabled = true;
+            btnDemo.textContent = "Modo demo bloqueado";
+            btnDemo.style.opacity = "0.55";
+            btnDemo.style.cursor = "not-allowed";
+        }
+    } else {
+        setMQTTText("MQTT: desconectado", "warn");
+
+        if (btnDemo) {
+            btnDemo.disabled = false;
+            btnDemo.textContent = "Modo demo";
+            btnDemo.style.opacity = "1";
+            btnDemo.style.cursor = "pointer";
         }
     }
+}
 
     function setMQTTText(text, type) {
         const el = document.getElementById("mqttStatus");
