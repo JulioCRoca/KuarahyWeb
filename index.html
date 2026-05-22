@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KUARAHY | Monitoreo Solar IoT</title>
+
+    <!-- MQTT.js -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --sun: #ffb703;
+            --sun-dark: #fb8500;
+            --orange: #f77f00;
+            --red: #d62828;
+            --cream: #fff8e7;
+            --soft: #ffe8b6;
+            --green: #2a9d8f;
+            --dark: #252422;
+            --text: #3a2d1f;
+            --card: rgba(255, 255, 255, 0.86);
+            --shadow: 0 18px 45px rgba(93, 57, 5, 0.18);
+            --radius: 22px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                    radial-gradient(circle at top left, #ffe066 0, transparent 34%),
+                    radial-gradient(circle at top right, #ff9f1c 0, transparent 30%),
+                    linear-gradient(135deg, #fff3c4, #ffe8a3 35%, #ffd166 100%);
+            color: var(--text);
+            padding: 28px;
+        }
+
+        .page {
+            max-width: 1250px;
+            margin: auto;
+        }
+
+        header {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ffb703, #fb8500);
+            border-radius: 30px;
+            padding: 38px;
+            box-shadow: var(--shadow);
+            color: #2b1a00;
+            margin-bottom: 28px;
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            right: -80px;
+            top: -90px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.28);
+        }
+
+        .project-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.45);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 5vw, 4.5rem);
+            line-height: 1;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            max-width: 760px;
+            font-weight: 500;
+        }
+
+        .top-status {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 22px;
+        }
+
+        .badge {
+            padding: 9px 15px;
+            border-radius: 999px;
+            font-weight: 700;
+            background: rgba(255,255,255,0.55);
+            border: 1px solid rgba(255,255,255,0.55);
+        }
+
+        .badge.ok {
+            color: #14532d;
+            background: #dcfce7;
+        }
+
+        .badge.warn {
+            color: #7c2d12;
+            background: #ffedd5;
+        }
+
+        .badge.error {
+            color: #7f1d1d;
+            background: #fee2e2;
+        }
+
+        .grid {
+            display: grid;
+            gap: 22px;
+        }
+
+        .cards {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 22px;
+        }
+
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.75);
+        }
+
+        .card .label {
+            font-size: 0.9rem;
+            color: #775a24;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 8px;
+        }
+
+        .card .value {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .card .unit {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #7c5b16;
+        }
+
+        .layout {
+            grid-template-columns: 1.7fr 1fr;
+            align-items: stretch;
+        }
+
+        .panel-title {
+            font-size: 1.35rem;
+            font-weight: 850;
+            margin-bottom: 16px;
+            color: #2b1a00;
+        }
+
+        .chart-box {
+            min-height: 430px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 330px !important;
+        }
+
+        .controls {
+            display: grid;
+            gap: 12px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-weight: 800;
+            color: #2b1a00;
+            background: linear-gradient(135deg, #ffd166, #ffb703);
+            box-shadow: 0 9px 18px rgba(251, 133, 0, 0.22);
+            transition: 0.18s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 24px rgba(251, 133, 0, 0.28);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #fff3b0, #ffd166);
+        }
+
+        button.danger {
+            background: linear-gradient(135deg, #ffadad, #f94144);
+            color: #fff;
+        }
+
+        button.green {
+            background: linear-gradient(135deg, #95d5b2, #2a9d8f);
+            color: #fff;
+        }
+
+        .comparison {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin-top: 22px;
+        }
+
+        .big-result {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--orange);
+        }
+
+        .info {
+            grid-template-columns: 1fr 1fr;
+            margin-top: 22px;
+        }
+
+        .info p {
+            line-height: 1.65;
+            margin-bottom: 10px;
+        }
+
+        .formula {
+            background: #2b1a00;
+            color: #ffe8a3;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-family: Consolas, monospace;
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+
+        .table-wrap {
+            margin-top: 22px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        th, td {
+            padding: 13px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f5d99d;
+        }
+
+        th {
+            background: #ffb703;
+            color: #2b1a00;
+            font-weight: 900;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 28px;
+            color: #68470b;
+            font-weight: 700;
+        }
+
+        @media (max-width: 980px) {
+            .cards,
+            .layout,
+            .comparison,
+            .hero-content,
+            .image-section {
+                grid-template-columns: 1fr;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-logo {
+                max-width: 70%;
+            }
+
+            .image-frame {
+                height: 260px;
+            }
+            .info {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 16px;
+            }
+
+            header {
+                padding: 28px;
+            }
+        }
+        /* =============================
+   IMÁGENES DEL PROYECTO
+   ============================= */
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .hero-text {
+            flex: 1;
+        }
+
+        .hero-logo {
+            width: 180px;
+            max-width: 28%;
+            min-width: 130px;
+            border-radius: 28px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 18px 35px rgba(90, 55, 0, 0.22);
+            object-fit: contain;
+        }
+
+        .image-section {
+            margin-top: 22px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .image-card {
+            overflow: hidden;
+        }
+
+        .image-frame {
+            width: 100%;
+            height: 330px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #fff3b0, #ffd166);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 14px;
+            border: 2px solid rgba(251, 133, 0, 0.18);
+        }
+
+        .project-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 10px;
+        }
+
+        .image-caption {
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: #5f4210;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+<div class="page">
+
+    <header>
+        <div class="hero-content">
+            <div class="hero-text">
+                <span class="project-tag">Ingeniería de Control · Energía Solar · IoT</span>
+                <h1>KUARAHY</h1>
+                <p class="subtitle">
+                    Sistema analógico de orientación solar con monitoreo IoT de voltaje,
+                    potencia y mejora relativa de captación mediante ESP32 y MQTT.
+                </p>
+
+                <div class="top-status">
+                    <span id="mqttStatus" class="badge warn">MQTT: desconectado</span>
+                    <span id="panelStatus" class="badge warn">Panel: sin datos</span>
+                    <span id="testStatus" class="badge">Prueba: esperando</span>
+                </div>
+            </div>
+
+            <img
+                    class="hero-logo"
+                    src="assets/logo-kuarahy.png"
+                    alt="Logo del proyecto KUARAHY"
+            >
+        </div>
+    </header>
+
+    <section class="grid cards">
+        <div class="card">
+            <div class="label">Voltaje actual</div>
+            <div class="value"><span id="voltajeActual">0.000</span> <span class="unit">V</span></div>
+        </div>
+
+        <div class="card">
+            <div class="label">Potencia actual</div>
+            <div class="value"><span id="potenciaActual">0.000</span> <span class="unit">mW</span></div>
+        </div>
+
+        <div class="card">
+            <div class="label">Lectura ADC</div>
+            <div class="value"><span id="adcActual">0</span></div>
+        </div>
+
+        <div class="card">
+            <div class="label">Última muestra</div>
+            <div class="value"><span id="tiempoActual">0.0</span> <span class="unit">s</span></div>
+        </div>
+    </section>
+
+    <section class="grid layout">
+        <div class="card chart-box">
+            <h2 class="panel-title">Potencia del panel vs tiempo</h2>
+            <canvas id="powerChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h2 class="panel-title">Control de prueba</h2>
+
+            <div class="controls">
+                <button onclick="connectMQTT()">Conectar MQTT</button>
+                <button class="green" onclick="startTest()">Iniciar prueba</button>
+                <button onclick="captureInitial()">Registrar condición inicial</button>
+                <button onclick="captureFinal()">Registrar condición final</button>
+                <button class="secondary" onclick="finishTest()">Finalizar prueba</button>
+                <button class="danger" onclick="resetData()">Reiniciar datos</button>
+                <button class="secondary" onclick="toggleDemo()">Modo demo</button>
+            </div>
+
+            <div class="formula">
+                Topic MQTT:<br>
+                kuarahy/panel/data
+            </div>
+        </div>
+    </section>
+
+    <section class="grid comparison">
+        <div class="card">
+            <div class="label">Promedio inicial P1</div>
+            <div class="big-result"><span id="pInicial">--</span> mW</div>
+            <p>Potencia promedio con el panel en mala orientación.</p>
+        </div>
+
+        <div class="card">
+            <div class="label">Promedio final P2</div>
+            <div class="big-result"><span id="pFinal">--</span> mW</div>
+            <p>Potencia promedio después de la orientación automática.</p>
+        </div>
+
+        <div class="card">
+            <div class="label">Mejora relativa</div>
+            <div class="big-result"><span id="mejora">--</span> %</div>
+            <p>Incremento relativo de captación entre P1 y P2.</p>
+        </div>
+    </section>
+
+    <section class="grid info">
+        <div class="card">
+            <h2 class="panel-title">Descripción del sistema</h2>
+            <p>
+                KUARAHY es un sistema analógico de orientación solar de un eje.
+                El circuito de control utiliza sensores LDR, amplificadores operacionales,
+                comparadores LM393, un puente H L298 y un motor DC para orientar
+                automáticamente el panel hacia la mayor incidencia luminosa.
+            </p>
+            <p>
+                El ESP32 no controla el motor. Su función es medir el voltaje generado
+                por el panel solar, calcular la potencia estimada y enviar los datos
+                a esta página mediante MQTT.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2 class="panel-title">Cálculo de mejora relativa</h2>
+            <p>
+                La página no calcula la eficiencia absoluta del panel, porque para ello
+                sería necesario conocer la irradiancia real incidente en W/m².
+                En su lugar, calcula la mejora relativa de captación.
+            </p>
+            <div class="formula">
+                P = V² / RL<br>
+                Mejora (%) = ((P2 - P1) / P1) × 100
+            </div>
+        </div>
+    </section>
+    <section class="grid image-section">
+        <div class="card image-card">
+            <h2 class="panel-title">Diagrama en bloques del sistema</h2>
+
+            <div class="image-frame">
+                <img
+                        class="project-img"
+                        src="assets/diagrama-bloques.png"
+                        alt="Diagrama en bloques del sistema KUARAHY"
+                >
+            </div>
+
+            <p class="image-caption">
+                Representación funcional del sistema de control. Se observan las entradas
+                de los sensores LDR, la etapa de acondicionamiento, comparadores, puente H,
+                motor DC, plataforma móvil y la realimentación óptica.
+            </p>
+        </div>
+
+        <div class="card image-card">
+            <h2 class="panel-title">Circuito eléctrico implementado</h2>
+
+            <div class="image-frame">
+                <img
+                        class="project-img"
+                        src="assets/circuito-electrico.png"
+                        alt="Circuito eléctrico del sistema KUARAHY"
+                >
+            </div>
+
+            <p class="image-caption">
+                Circuito analógico implementado para el seguimiento solar. El sistema utiliza
+                sensores LDR, amplificador operacional, comparadores LM393, puente H L298
+                y motor DC para orientar el panel hacia la mayor incidencia luminosa.
+            </p>
+        </div>
+    </section>
+    <section class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Muestra</th>
+                <th>Tiempo</th>
+                <th>Voltaje</th>
+                <th>Potencia</th>
+                <th>Estado</th>
+            </tr>
+            </thead>
+            <tbody id="dataTable">
+            <tr>
+                <td colspan="5">Esperando datos del ESP32...</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <div class="footer">
+        KUARAHY · Sistema Analógico de Orientación Solar · Dashboard IoT By Vicky, Julio And Mati
+    </div>
+</div>
+
+<script>
+    // =============================
+    // CONFIGURACIÓN GENERAL
+    // =============================
+
+    const MQTT_BROKER = "wss://broker.emqx.io:8084/mqtt";
+    const TOPIC_DATA = "kuarahy/panel/data";
+    const TOPIC_CMD = "kuarahy/panel/cmd";
+
+    const NUM_MUESTRAS = 5;
+    const RL = 10000; // Resistencia de carga en ohmios
+
+    const MAX_POINTS = 80;
+
+    let client = null;
+    let mqttConnected = false;
+
+    let testStarted = false;
+    let captureMode = null; // null, "initial", "final"
+
+    let initialSamples = [];
+    let finalSamples = [];
+
+    let p1 = null;
+    let p2 = null;
+
+    let sampleCounter = 0;
+    let lastDataTime = Date.now();
+
+    let demoActive = false;
+    let demoInterval = null;
+
+    // =============================
+    // GRÁFICA
+    // =============================
+
+    const ctx = document.getElementById("powerChart").getContext("2d");
+
+    const powerChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Potencia del panel (mW)",
+                    data: [],
+                    borderColor: "#fb8500",
+                    backgroundColor: "rgba(251, 133, 0, 0.20)",
+                    borderWidth: 3,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointBackgroundColor: "#d62828",
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: "#3a2d1f",
+                        font: {
+                            weight: "bold"
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Tiempo / muestra",
+                        color: "#3a2d1f",
+                        font: { weight: "bold" }
+                    },
+                    ticks: { color: "#3a2d1f" },
+                    grid: { color: "rgba(90, 60, 10, 0.12)" }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: "Potencia (mW)",
+                        color: "#3a2d1f",
+                        font: { weight: "bold" }
+                    },
+                    ticks: { color: "#3a2d1f" },
+                    grid: { color: "rgba(90, 60, 10, 0.12)" }
+                }
+            }
+        }
+    });
+
+    // =============================
+    // CONEXIÓN MQTT
+    // =============================
+
+    function connectMQTT() {
+        if (client && mqttConnected) {
+            return;
+        }
+
+        const clientId = "kuarahy_web_" + Math.random().toString(16).substring(2, 10);
+
+        client = mqtt.connect(MQTT_BROKER, {
+            clientId: clientId,
+            clean: true,
+            connectTimeout: 5000,
+            reconnectPeriod: 3000
+        });
+
+        client.on("connect", () => {
+            mqttConnected = true;
+            setMQTTStatus(true);
+            client.subscribe(TOPIC_DATA);
+        });
+
+        client.on("reconnect", () => {
+            setMQTTText("MQTT: reconectando...", "warn");
+        });
+
+        client.on("error", (err) => {
+            console.error("Error MQTT:", err);
+            setMQTTText("MQTT: error de conexión", "error");
+        });
+
+        client.on("close", () => {
+            mqttConnected = false;
+            setMQTTStatus(false);
+        });
+
+        client.on("message", (topic, message) => {
+            if (topic === TOPIC_DATA) {
+                try {
+                    const data = JSON.parse(message.toString());
+                    processIncomingData(data);
+                } catch (error) {
+                    console.error("JSON inválido:", error);
+                }
+            }
+        });
+    }
+
+    function publishCommand(command) {
+        if (!client || !mqttConnected) return;
+
+        const payload = JSON.stringify({
+            cmd: command,
+            timestamp: Date.now()
+        });
+
+        client.publish(TOPIC_CMD, payload);
+    }
+
+    // =============================
+    // PROCESAMIENTO DE DATOS
+    // =============================
+
+    function processIncomingData(data) {
+        lastDataTime = Date.now();
+        sampleCounter++;
+
+        const voltaje = Number(data.voltaje ?? 0);
+        const adc = Number(data.adc ?? 0);
+        const tiempo = Number(data.tiempo ?? sampleCounter * 0.5);
+
+        let potenciaW;
+
+        if (data.potencia !== undefined) {
+            potenciaW = Number(data.potencia);
+        } else {
+            potenciaW = (voltaje * voltaje) / RL;
+        }
+
+        const potenciaMW = potenciaW * 1000;
+
+        const estadoPanel = data.estadoPanel || (voltaje > 0.1 ? "conectado" : "desconectado");
+
+        updateCards(voltaje, potenciaMW, adc, tiempo, estadoPanel);
+        updateChart(tiempo, potenciaMW);
+        updateTable(sampleCounter, tiempo, voltaje, potenciaMW, estadoPanel);
+        handleCapture(potenciaMW);
+    }
+
+    function handleCapture(potenciaMW) {
+        if (!testStarted || captureMode === null) return;
+
+        if (captureMode === "initial") {
+            initialSamples.push(potenciaMW);
+            setTestText(`Registrando condición inicial: ${initialSamples.length}/${NUM_MUESTRAS}`);
+
+            if (initialSamples.length >= NUM_MUESTRAS) {
+                p1 = average(initialSamples);
+                document.getElementById("pInicial").textContent = p1.toFixed(3);
+                captureMode = null;
+                setTestText("Condición inicial registrada");
+                calculateImprovement();
+            }
+        }
+
+        if (captureMode === "final") {
+            finalSamples.push(potenciaMW);
+            setTestText(`Registrando condición final: ${finalSamples.length}/${NUM_MUESTRAS}`);
+
+            if (finalSamples.length >= NUM_MUESTRAS) {
+                p2 = average(finalSamples);
+                document.getElementById("pFinal").textContent = p2.toFixed(3);
+                captureMode = null;
+                setTestText("Condición final registrada");
+                calculateImprovement();
+            }
+        }
+    }
+
+    function average(values) {
+        if (values.length === 0) return 0;
+        return values.reduce((a, b) => a + b, 0) / values.length;
+    }
+
+    function calculateImprovement() {
+        if (p1 === null || p2 === null) return;
+
+        if (p1 <= 0.001) {
+            document.getElementById("mejora").textContent = "N/D";
+            return;
+        }
+
+        const mejora = ((p2 - p1) / p1) * 100;
+        document.getElementById("mejora").textContent = mejora.toFixed(2);
+    }
+
+    // =============================
+    // BOTONES DE PRUEBA
+    // =============================
+
+    function startTest() {
+        testStarted = true;
+        captureMode = null;
+        initialSamples = [];
+        finalSamples = [];
+        p1 = null;
+        p2 = null;
+
+        document.getElementById("pInicial").textContent = "--";
+        document.getElementById("pFinal").textContent = "--";
+        document.getElementById("mejora").textContent = "--";
+
+        setTestText("Prueba iniciada");
+        publishCommand("start_test");
+    }
+
+    function captureInitial() {
+        if (!testStarted) startTest();
+
+        initialSamples = [];
+        captureMode = "initial";
+        setTestText("Registrando condición inicial...");
+        publishCommand("capture_initial");
+    }
+
+    function captureFinal() {
+        if (!testStarted) startTest();
+
+        finalSamples = [];
+        captureMode = "final";
+        setTestText("Registrando condición final...");
+        publishCommand("capture_final");
+    }
+
+    function finishTest() {
+        captureMode = null;
+        testStarted = false;
+        setTestText("Prueba finalizada");
+        publishCommand("finish_test");
+    }
+
+    function resetData() {
+        testStarted = false;
+        captureMode = null;
+        initialSamples = [];
+        finalSamples = [];
+        p1 = null;
+        p2 = null;
+        sampleCounter = 0;
+
+        document.getElementById("voltajeActual").textContent = "0.000";
+        document.getElementById("potenciaActual").textContent = "0.000";
+        document.getElementById("adcActual").textContent = "0";
+        document.getElementById("tiempoActual").textContent = "0.0";
+
+        document.getElementById("pInicial").textContent = "--";
+        document.getElementById("pFinal").textContent = "--";
+        document.getElementById("mejora").textContent = "--";
+
+        document.getElementById("dataTable").innerHTML =
+            `<tr><td colspan="5">Esperando datos del ESP32...</td></tr>`;
+
+        powerChart.data.labels = [];
+        powerChart.data.datasets[0].data = [];
+        powerChart.update();
+
+        setTestText("Prueba reiniciada");
+        publishCommand("reset");
+    }
+
+    // =============================
+    // MODO DEMO
+    // =============================
+
+    function toggleDemo() {
+        demoActive = !demoActive;
+
+        if (demoActive) {
+            setMQTTText("MQTT: modo demo activo", "warn");
+
+            let t = 0;
+            demoInterval = setInterval(() => {
+                t += 0.5;
+
+                const base = t < 12 ? 3.2 : 5.1;
+                const noise = (Math.random() - 0.5) * 0.35;
+                const voltaje = Math.max(0, base + noise);
+                const potencia = (voltaje * voltaje) / RL;
+                const adc = Math.round((voltaje / 48.1) * 4095);
+
+                processIncomingData({
+                    voltaje,
+                    potencia,
+                    adc,
+                    estadoPanel: "conectado",
+                    tiempo: t
+                });
+            }, 500);
+        } else {
+            clearInterval(demoInterval);
+            demoInterval = null;
+            setMQTTStatus(mqttConnected);
+        }
+    }
+
+    // =============================
+    // ACTUALIZACIÓN VISUAL
+    // =============================
+
+    function updateCards(voltaje, potenciaMW, adc, tiempo, estadoPanel) {
+        document.getElementById("voltajeActual").textContent = voltaje.toFixed(3);
+        document.getElementById("potenciaActual").textContent = potenciaMW.toFixed(3);
+        document.getElementById("adcActual").textContent = adc.toFixed(0);
+        document.getElementById("tiempoActual").textContent = tiempo.toFixed(1);
+
+        if (estadoPanel === "conectado") {
+            setPanelText("Panel: conectado", "ok");
+        } else {
+            setPanelText("Panel: desconectado o sin generación", "error");
+        }
+    }
+
+    function updateChart(tiempo, potenciaMW) {
+        powerChart.data.labels.push(tiempo.toFixed(1));
+        powerChart.data.datasets[0].data.push(potenciaMW);
+
+        if (powerChart.data.labels.length > MAX_POINTS) {
+            powerChart.data.labels.shift();
+            powerChart.data.datasets[0].data.shift();
+        }
+
+        powerChart.update();
+    }
+
+    function updateTable(sample, tiempo, voltaje, potenciaMW, estado) {
+        const table = document.getElementById("dataTable");
+
+        if (sample === 1) {
+            table.innerHTML = "";
+        }
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+        <td>${sample}</td>
+        <td>${tiempo.toFixed(1)} s</td>
+        <td>${voltaje.toFixed(3)} V</td>
+        <td>${potenciaMW.toFixed(3)} mW</td>
+        <td>${estado}</td>
+      `;
+
+        table.prepend(row);
+
+        while (table.children.length > 8) {
+            table.removeChild(table.lastChild);
+        }
+    }
+
+    function setMQTTStatus(connected) {
+        if (connected) {
+            setMQTTText("MQTT: conectado", "ok");
+        } else {
+            setMQTTText("MQTT: desconectado", "warn");
+        }
+    }
+
+    function setMQTTText(text, type) {
+        const el = document.getElementById("mqttStatus");
+        el.textContent = text;
+        el.className = `badge ${type}`;
+    }
+
+    function setPanelText(text, type) {
+        const el = document.getElementById("panelStatus");
+        el.textContent = text;
+        el.className = `badge ${type}`;
+    }
+
+    function setTestText(text) {
+        const el = document.getElementById("testStatus");
+        el.textContent = `Prueba: ${text}`;
+        el.className = "badge";
+    }
+
+    // Detectar si dejaron de llegar datos
+    setInterval(() => {
+        const elapsed = Date.now() - lastDataTime;
+
+        if (elapsed > 5000 && !demoActive) {
+            setPanelText("Panel: sin datos recientes", "warn");
+        }
+    }, 1000);
+</script>
+</body>
+</html>
