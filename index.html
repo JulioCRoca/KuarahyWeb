@@ -3,12 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta property="og:title" content="KUARAHY | Sistema Analógico de Orientación Solar">
-    <meta property="og:description" content="Dashboard IoT para monitoreo de voltaje, potencia, ángulo y mejora relativa de captación solar.">
-    <meta property="og:image" content="https://juliocroca.github.io/KuarahyWeb/assets/logo-kuarahy.png">
-    <meta property="og:url" content="https://juliocroca.github.io/KuarahyWeb/">
-    <meta property="og:type" content="website">
-    <title>KUARAHY | Monitoreo Solar IoT</title>
+    <title>KUARAHY | Monitoreo Solar IoT - MPU6050</title>
 
     <!-- MQTT.js -->
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -135,7 +130,7 @@
         }
 
         .cards {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             margin-bottom: 22px;
         }
 
@@ -180,24 +175,41 @@
             margin-bottom: 16px;
             color: #2b1a00;
         }
-.chart-box {
-    min-height: 560px;
-    display: flex;
-    flex-direction: column;
-}
 
-.chart-container {
-    position: relative;
-    width: 100%;
-    flex: 1;
-    min-height: 440px;
-}
+        .chart-box {
+            min-height: 560px;
+            display: flex;
+            flex-direction: column;
+        }
 
-.chart-container canvas {
-    display: block;
-    width: 100% !important;
-    height: 100% !important;
-}
+        .chart-container {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            min-height: 455px;
+        }
+
+        .chart-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .angle-layout {
+            grid-template-columns: 1fr;
+            margin-top: 22px;
+        }
+
+        .angle-chart-box {
+            min-height: 540px;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none;
+        }
 
         .controls {
             display: grid;
@@ -307,20 +319,6 @@
             .cards,
             .layout,
             .comparison,
-            .hero-content,
-            .image-section {
-                grid-template-columns: 1fr;
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .hero-logo {
-                max-width: 70%;
-            }
-
-            .image-frame {
-                height: 260px;
-            }
             .info {
                 grid-template-columns: 1fr;
             }
@@ -333,10 +331,11 @@
                 padding: 28px;
             }
         }
-        /* =============================
-   IMÁGENES DEL PROYECTO
-   ============================= */
 
+
+        /* =============================
+           LOGO, CABECERA Y RESPONSIVE EXTRA
+           ============================= */
         .hero-content {
             position: relative;
             z-index: 2;
@@ -361,40 +360,48 @@
             object-fit: contain;
         }
 
-        .image-section {
-            margin-top: 22px;
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .image-card {
-            overflow: hidden;
-        }
-
-        .image-frame {
-            width: 100%;
-            height: 330px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, #fff3b0, #ffd166);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            margin-bottom: 14px;
-            border: 2px solid rgba(251, 133, 0, 0.18);
-        }
-
-        .project-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 10px;
-        }
-
-        .image-caption {
+        .chart-note {
+            margin-top: 12px;
             font-size: 0.95rem;
             line-height: 1.55;
             color: #5f4210;
             font-weight: 600;
+        }
+
+        @media (max-width: 980px) {
+            .cards,
+            .layout,
+            .angle-layout,
+            .comparison,
+            .info {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-logo {
+                max-width: 70%;
+            }
+
+            .chart-box,
+            .angle-chart-box {
+                min-height: 460px;
+            }
+
+            .chart-container {
+                min-height: 340px;
+            }
+
+            body {
+                padding: 16px;
+            }
+
+            header {
+                padding: 28px;
+            }
         }
     </style>
 </head>
@@ -409,12 +416,14 @@
                 <h1>KUARAHY</h1>
                 <p class="subtitle">
                     Sistema analógico de orientación solar con monitoreo IoT de voltaje,
-                    potencia y mejora relativa de captación mediante ESP32 y MQTT.
+                    potencia, ángulo y mejora relativa de captación mediante ESP32 y MQTT.
+                    Versión con MPU6050.
                 </p>
 
                 <div class="top-status">
                     <span id="mqttStatus" class="badge warn">MQTT: desconectado</span>
                     <span id="panelStatus" class="badge warn">Panel: sin datos</span>
+                    <span id="sensorStatus" class="badge warn">MPU: sin datos</span>
                     <span id="testStatus" class="badge">Prueba: esperando</span>
                 </div>
             </div>
@@ -447,16 +456,20 @@
             <div class="label">Última muestra</div>
             <div class="value"><span id="tiempoActual">0.0</span> <span class="unit">s</span></div>
         </div>
+
+        <div class="card">
+            <div class="label">Ángulo actual</div>
+            <div class="value"><span id="anguloActual">0.0</span> <span class="unit">°</span></div>
+        </div>
     </section>
 
     <section class="grid layout">
-       <div class="card chart-box">
-    <h2 class="panel-title">Potencia del panel vs tiempo</h2>
-
-    <div class="chart-container">
-        <canvas id="powerChart"></canvas>
-    </div>
-</div>
+        <div class="card chart-box">
+            <h2 class="panel-title">Potencia del panel vs tiempo</h2>
+            <div class="chart-container">
+                <canvas id="powerChart"></canvas>
+            </div>
+        </div>
 
         <div class="card">
             <h2 class="panel-title">Control de prueba</h2>
@@ -464,6 +477,7 @@
             <div class="controls">
                 <button onclick="connectMQTT()">Conectar MQTT</button>
                 <button class="secondary" onclick="disconnectMQTT()">Desconectar MQTT</button>
+                <button class="secondary" onclick="calibrateSensor()">Calibrar sensor angular</button>
                 <button class="green" onclick="startTest()">Iniciar prueba</button>
                 <button onclick="captureInitial()">Registrar condición inicial</button>
                 <button onclick="captureFinal()">Registrar condición final</button>
@@ -476,6 +490,19 @@
                 Topic MQTT:<br>
                 kuarahy/panel/data
             </div>
+        </div>
+    </section>
+
+    <section class="grid angle-layout">
+        <div class="card chart-box angle-chart-box">
+            <h2 class="panel-title">Potencia del panel vs ángulo</h2>
+            <div class="chart-container">
+                <canvas id="angleChart"></canvas>
+            </div>
+            <p class="chart-note">
+                Esta gráfica relaciona la potencia estimada del panel con el ángulo medido por el MPU6050.
+                Permite observar en qué posición angular se obtiene mayor captación dentro del rango de -180° a 180°.
+            </p>
         </div>
     </section>
 
@@ -528,43 +555,7 @@
             </div>
         </div>
     </section>
-    <section class="grid image-section">
-        <div class="card image-card">
-            <h2 class="panel-title">Diagrama en bloques del sistema</h2>
 
-            <div class="image-frame">
-                <img
-                        class="project-img"
-                        src="assets/diagrama-bloques.png"
-                        alt="Diagrama en bloques del sistema KUARAHY"
-                >
-            </div>
-
-            <p class="image-caption">
-                Representación funcional del sistema de control. Se observan las entradas
-                de los sensores LDR, la etapa de acondicionamiento, comparadores, puente H,
-                motor DC, plataforma móvil y la realimentación óptica.
-            </p>
-        </div>
-
-        <div class="card image-card">
-            <h2 class="panel-title">Circuito eléctrico implementado</h2>
-
-            <div class="image-frame">
-                <img
-                        class="project-img"
-                        src="assets/circuito-electrico.png"
-                        alt="Circuito eléctrico del sistema KUARAHY"
-                >
-            </div>
-
-            <p class="image-caption">
-                Circuito analógico implementado para el seguimiento solar. El sistema utiliza
-                sensores LDR, amplificador operacional, comparadores LM393, puente H L298
-                y motor DC para orientar el panel hacia la mayor incidencia luminosa.
-            </p>
-        </div>
-    </section>
     <section class="table-wrap">
         <table>
             <thead>
@@ -573,12 +564,13 @@
                 <th>Tiempo</th>
                 <th>Voltaje</th>
                 <th>Potencia</th>
+                <th>Ángulo</th>
                 <th>Estado</th>
             </tr>
             </thead>
             <tbody id="dataTable">
             <tr>
-                <td colspan="5">Esperando datos del ESP32...</td>
+                <td colspan="6">Esperando datos del ESP32...</td>
             </tr>
             </tbody>
         </table>
@@ -601,7 +593,9 @@
     const NUM_MUESTRAS = 5;
     const RL = 10000; // Resistencia de carga en ohmios
 
-    const MAX_POINTS = 250;
+    const MAX_POINTS = 80;
+    const ANGULO_MIN = -180;
+    const ANGULO_MAX = 180;
 
     let client = null;
     let mqttConnected = false;
@@ -626,6 +620,22 @@
     // =============================
 
     const ctx = document.getElementById("powerChart").getContext("2d");
+    const ctxAngle = document.getElementById("angleChart").getContext("2d");
+
+    const commonChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        devicePixelRatio: window.devicePixelRatio || 2,
+        resizeDelay: 100,
+        plugins: {
+            legend: {
+                labels: {
+                    color: "#3a2d1f",
+                    font: { weight: "bold" }
+                }
+            }
+        }
+    };
 
     const powerChart = new Chart(ctx, {
         type: "line",
@@ -646,36 +656,58 @@
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: "#3a2d1f",
-                        font: {
-                            weight: "bold"
-                        }
-                    }
-                }
-            },
+            ...commonChartOptions,
             scales: {
                 x: {
-                    title: {
-                        display: true,
-                        text: "Tiempo / muestra",
-                        color: "#3a2d1f",
-                        font: { weight: "bold" }
-                    },
+                    title: { display: true, text: "Tiempo / muestra", color: "#3a2d1f", font: { weight: "bold" } },
                     ticks: { color: "#3a2d1f" },
                     grid: { color: "rgba(90, 60, 10, 0.12)" }
                 },
                 y: {
-                    title: {
-                        display: true,
-                        text: "Potencia (mW)",
+                    title: { display: true, text: "Potencia (mW)", color: "#3a2d1f", font: { weight: "bold" } },
+                    ticks: { color: "#3a2d1f" },
+                    grid: { color: "rgba(90, 60, 10, 0.12)" }
+                }
+            }
+        }
+    });
+
+    const angleChart = new Chart(ctxAngle, {
+        type: "scatter",
+        data: {
+            datasets: [
+                {
+                    label: "Potencia vs ángulo",
+                    data: [],
+                    borderColor: "#d62828",
+                    backgroundColor: "rgba(214, 40, 40, 0.20)",
+                    pointBackgroundColor: "#fb8500",
+                    pointRadius: 4,
+                    borderWidth: 3,
+                    showLine: true,
+                    tension: 0.25,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            ...commonChartOptions,
+            scales: {
+                x: {
+                    min: ANGULO_MIN,
+                    max: ANGULO_MAX,
+                    title: { display: true, text: "Ángulo del panel (°)", color: "#3a2d1f", font: { weight: "bold" } },
+                    ticks: {
                         color: "#3a2d1f",
-                        font: { weight: "bold" }
+                        stepSize: 30,
+                        callback: function(value) {
+                            return value + "°";
+                        }
                     },
+                    grid: { color: "rgba(90, 60, 10, 0.12)" }
+                },
+                y: {
+                    title: { display: true, text: "Potencia (mW)", color: "#3a2d1f", font: { weight: "bold" } },
                     ticks: { color: "#3a2d1f" },
                     grid: { color: "rgba(90, 60, 10, 0.12)" }
                 }
@@ -691,11 +723,7 @@
         if (client && mqttConnected) {
             return;
         }
-        if (demoActive) {
-        clearInterval(demoInterval);
-        demoInterval = null;
-        demoActive = false;
-        }
+
         const clientId = "kuarahy_web_" + Math.random().toString(16).substring(2, 10);
 
         client = mqtt.connect(MQTT_BROKER, {
@@ -736,21 +764,26 @@
             }
         });
     }
+
 function disconnectMQTT() {
-    if (client) {
-        client.end(true);  // Cierra la conexión MQTT y evita reconexión automática
-        client = null;
+        if (client) {
+            client.end(true);
+            client = null;
+        }
+
+        mqttConnected = false;
+        setMQTTStatus(false);
+        setPanelText("Panel: sin datos recientes", "warn");
+        setTestText("MQTT desconectado");
+        console.log("MQTT desconectado manualmente");
     }
 
-    mqttConnected = false;
+    function calibrateSensor() {
+        publishCommand("calibrar_angulo");
+        setTestText("Comando de calibración enviado");
+    }
 
-    setMQTTStatus(false);
-    setPanelText("Panel: sin datos recientes", "warn");
-    setTestText("MQTT desconectado");
-
-    console.log("MQTT desconectado manualmente");
-}
-    function publishCommand(command) {
+        function publishCommand(command) {
         if (!client || !mqttConnected) return;
 
         const payload = JSON.stringify({
@@ -765,6 +798,26 @@ function disconnectMQTT() {
     // PROCESAMIENTO DE DATOS
     // =============================
 
+    // Normaliza cualquier lectura angular al rango -180° a 180°.
+    // Esto evita saltos visuales si el sensor entrega valores fuera del rango esperado.
+    function normalizarAngulo180(angulo) {
+        let a = Number(angulo);
+
+        if (!Number.isFinite(a)) {
+            return 0;
+        }
+
+        while (a > 180) {
+            a -= 360;
+        }
+
+        while (a < -180) {
+            a += 360;
+        }
+
+        return a;
+    }
+
     function processIncomingData(data) {
         lastDataTime = Date.now();
         sampleCounter++;
@@ -772,6 +825,7 @@ function disconnectMQTT() {
         const voltaje = Number(data.voltaje ?? 0);
         const adc = Number(data.adc ?? 0);
         const tiempo = Number(data.tiempo ?? sampleCounter * 0.5);
+        const angulo = normalizarAngulo180(data.angulo ?? 0);
 
         let potenciaW;
 
@@ -784,10 +838,11 @@ function disconnectMQTT() {
         const potenciaMW = potenciaW * 1000;
 
         const estadoPanel = data.estadoPanel || (voltaje > 0.1 ? "conectado" : "desconectado");
+        const estadoSensor = data.estadoMPU || data.estadoEncoder || data.estadoSensor || (data.angulo !== undefined ? "ok" : "sin datos");
 
-        updateCards(voltaje, potenciaMW, adc, tiempo, estadoPanel);
-        updateChart(tiempo, potenciaMW);
-        updateTable(sampleCounter, tiempo, voltaje, potenciaMW, estadoPanel);
+        updateCards(voltaje, potenciaMW, adc, tiempo, estadoPanel, angulo, estadoSensor);
+        updateChart(tiempo, potenciaMW, angulo);
+        updateTable(sampleCounter, tiempo, voltaje, potenciaMW, angulo, estadoPanel);
         handleCapture(potenciaMW);
     }
 
@@ -896,18 +951,23 @@ function disconnectMQTT() {
         document.getElementById("potenciaActual").textContent = "0.000";
         document.getElementById("adcActual").textContent = "0";
         document.getElementById("tiempoActual").textContent = "0.0";
+        document.getElementById("anguloActual").textContent = "0.0";
 
         document.getElementById("pInicial").textContent = "--";
         document.getElementById("pFinal").textContent = "--";
         document.getElementById("mejora").textContent = "--";
 
         document.getElementById("dataTable").innerHTML =
-            `<tr><td colspan="5">Esperando datos del ESP32...</td></tr>`;
+            `<tr><td colspan="6">Esperando datos del ESP32...</td></tr>`;
 
         powerChart.data.labels = [];
         powerChart.data.datasets[0].data = [];
         powerChart.update();
 
+        angleChart.data.datasets[0].data = [];
+        angleChart.update();
+
+        setSensorText("MPU: sin datos", "warn");
         setTestText("Prueba reiniciada");
         publishCommand("reset");
     }
@@ -917,59 +977,80 @@ function disconnectMQTT() {
     // =============================
 
     function toggleDemo() {
-    if (mqttConnected) {
-        alert("No se puede activar el modo demo mientras MQTT está conectado. Desconecta MQTT o usa solo datos reales del ESP32.");
-        return;
+        if (mqttConnected) {
+            alert("No se puede activar el modo demo mientras MQTT está conectado. Desconecta MQTT o usa solo datos reales del ESP32.");
+            return;
+        }
+
+        demoActive = !demoActive;
+
+        if (demoActive) {
+            setMQTTText("MQTT: modo demo activo", "warn");
+            setSensorText("MPU: demo", "warn");
+
+            let t = 0;
+            demoInterval = setInterval(() => {
+                t += 0.5;
+
+                let angulo;
+                if (t < 12) {
+                    angulo = -52 + (Math.random() - 0.5) * 4;
+                } else {
+                    angulo = -52 + Math.min((t - 12) * 8, 52) + (Math.random() - 0.5) * 3;
+                }
+
+                const factorOrientacion = Math.max(0.25, 1 - Math.abs(angulo) / 70);
+                const voltaje = Math.max(0, 2.7 + factorOrientacion * 2.5 + (Math.random() - 0.5) * 0.25);
+                const potencia = (voltaje * voltaje) / RL;
+                const adc = Math.round((voltaje / 48.1) * 4095);
+
+                processIncomingData({
+                    voltaje,
+                    potencia,
+                    adc,
+                    estadoPanel: "conectado",
+                    tiempo: t,
+                    angulo,
+                    pitch: angulo,
+                    roll: (Math.random() - 0.5) * 3,
+                    estadoMPU: "ok"
+                });
+            }, 500);
+        } else {
+            clearInterval(demoInterval);
+            demoInterval = null;
+            setMQTTStatus(mqttConnected);
+            setSensorText("MPU: sin datos", "warn");
+        }
     }
-
-    demoActive = !demoActive;
-
-    if (demoActive) {
-        setMQTTText("MQTT: modo demo activo", "warn");
-
-        let t = 0;
-        demoInterval = setInterval(() => {
-            t += 0.5;
-
-            const base = t < 12 ? 3.2 : 5.1;
-            const noise = (Math.random() - 0.5) * 0.35;
-            const voltaje = Math.max(0, base + noise);
-            const potencia = (voltaje * voltaje) / RL;
-            const adc = Math.round((voltaje / 48.1) * 4095);
-
-            processIncomingData({
-                voltaje,
-                potencia,
-                adc,
-                estadoPanel: "conectado",
-                tiempo: t
-            });
-        }, 500);
-    } else {
-        clearInterval(demoInterval);
-        demoInterval = null;
-        setMQTTStatus(mqttConnected);
-    }
-}
 
     // =============================
     // ACTUALIZACIÓN VISUAL
     // =============================
 
-    function updateCards(voltaje, potenciaMW, adc, tiempo, estadoPanel) {
+    function updateCards(voltaje, potenciaMW, adc, tiempo, estadoPanel, angulo, estadoSensor) {
         document.getElementById("voltajeActual").textContent = voltaje.toFixed(3);
         document.getElementById("potenciaActual").textContent = potenciaMW.toFixed(3);
         document.getElementById("adcActual").textContent = adc.toFixed(0);
         document.getElementById("tiempoActual").textContent = tiempo.toFixed(1);
+        document.getElementById("anguloActual").textContent = angulo.toFixed(1);
 
         if (estadoPanel === "conectado") {
             setPanelText("Panel: conectado", "ok");
         } else {
             setPanelText("Panel: desconectado o sin generación", "error");
         }
+
+        if (estadoSensor === "ok") {
+            setSensorText("MPU: conectado", "ok");
+        } else if (estadoSensor === "demo") {
+            setSensorText("MPU: demo", "warn");
+        } else {
+            setSensorText("MPU: sin datos", "warn");
+        }
     }
 
-    function updateChart(tiempo, potenciaMW) {
+    function updateChart(tiempo, potenciaMW, angulo) {
         powerChart.data.labels.push(tiempo.toFixed(1));
         powerChart.data.datasets[0].data.push(potenciaMW);
 
@@ -979,9 +1060,17 @@ function disconnectMQTT() {
         }
 
         powerChart.update();
+
+        angleChart.data.datasets[0].data.push({ x: angulo, y: potenciaMW });
+
+        if (angleChart.data.datasets[0].data.length > MAX_POINTS) {
+            angleChart.data.datasets[0].data.shift();
+        }
+
+        angleChart.update();
     }
 
-    function updateTable(sample, tiempo, voltaje, potenciaMW, estado) {
+    function updateTable(sample, tiempo, voltaje, potenciaMW, angulo, estado) {
         const table = document.getElementById("dataTable");
 
         if (sample === 1) {
@@ -994,6 +1083,7 @@ function disconnectMQTT() {
         <td>${tiempo.toFixed(1)} s</td>
         <td>${voltaje.toFixed(3)} V</td>
         <td>${potenciaMW.toFixed(3)} mW</td>
+        <td>${angulo.toFixed(1)} °</td>
         <td>${estado}</td>
       `;
 
@@ -1004,29 +1094,25 @@ function disconnectMQTT() {
         }
     }
 
-   function setMQTTStatus(connected) {
-    const btnDemo = document.getElementById("btnDemo");
+    function setMQTTStatus(connected) {
+        const btnDemo = document.getElementById("btnDemo");
 
-    if (connected) {
-        setMQTTText("MQTT: conectado", "ok");
+        if (connected) {
+            setMQTTText("MQTT: conectado", "ok");
 
-        if (btnDemo) {
-            btnDemo.disabled = true;
-            btnDemo.textContent = "Modo demo bloqueado";
-            btnDemo.style.opacity = "0.55";
-            btnDemo.style.cursor = "not-allowed";
-        }
-    } else {
-        setMQTTText("MQTT: desconectado", "warn");
+            if (btnDemo) {
+                btnDemo.disabled = true;
+                btnDemo.textContent = "Modo demo bloqueado";
+            }
+        } else {
+            setMQTTText("MQTT: desconectado", "warn");
 
-        if (btnDemo) {
-            btnDemo.disabled = false;
-            btnDemo.textContent = "Modo demo";
-            btnDemo.style.opacity = "1";
-            btnDemo.style.cursor = "pointer";
+            if (btnDemo) {
+                btnDemo.disabled = false;
+                btnDemo.textContent = "Modo demo";
+            }
         }
     }
-}
 
     function setMQTTText(text, type) {
         const el = document.getElementById("mqttStatus");
@@ -1036,6 +1122,13 @@ function disconnectMQTT() {
 
     function setPanelText(text, type) {
         const el = document.getElementById("panelStatus");
+        el.textContent = text;
+        el.className = `badge ${type}`;
+    }
+
+    function setSensorText(text, type) {
+        const el = document.getElementById("sensorStatus");
+        if (!el) return;
         el.textContent = text;
         el.className = `badge ${type}`;
     }
