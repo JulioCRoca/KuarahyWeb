@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KUARAHY Lab | Modelo, simulación y control</title>
+    <meta name="description" content="Página técnica interactiva del proyecto KUARAHY: modelo matemático, lazo cerrado, LDR, comparadores, función de transferencia y simuladores." />
+    <link rel="icon" type="image/png" href="assets/logo-kuarahy.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --sun: #ffb703;
+            --sun-dark: #fb8500;
+            --orange: #f77f00;
+            --red: #d62828;
+            --cream: #fff8e7;
+            --soft: #ffe8b6;
+            --green: #2a9d8f;
+            --dark: #252422;
+            --text: #3a2d1f;
+            --card: rgba(255, 255, 255, 0.88);
+            --shadow: 0 18px 45px rgba(93, 57, 5, 0.18);
+            --radius: 22px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        sub {
+            font-size: 0.72em;
+            vertical-align: sub;
+            line-height: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                    radial-gradient(circle at top left, #ffe066 0, transparent 34%),
+                    radial-gradient(circle at top right, #ff9f1c 0, transparent 30%),
+                    linear-gradient(135deg, #fff3c4, #ffe8a3 35%, #ffd166 100%);
+            color: var(--text);
+            padding: 28px;
+        }
+
+        .page {
+            max-width: 1250px;
+            margin: auto;
+        }
+
+        header {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ffb703, #fb8500);
+            border-radius: 30px;
+            padding: 38px;
+            box-shadow: var(--shadow);
+            color: #2b1a00;
+            margin-bottom: 24px;
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            right: -80px;
+            top: -90px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.28);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .hero-text { flex: 1; }
+
+        .hero-logo {
+            width: 180px;
+            max-width: 28%;
+            min-width: 130px;
+            border-radius: 28px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 18px 35px rgba(90, 55, 0, 0.22);
+            object-fit: contain;
+        }
+
+        .project-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.45);
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 5vw, 4.5rem);
+            line-height: 1;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            max-width: 820px;
+            font-weight: 500;
+            line-height: 1.55;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .nav-card {
+            background: rgba(255,255,255,0.62);
+            border: 1px solid rgba(255,255,255,0.62);
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-card a,
+        button,
+        .link-button {
+            border: none;
+            cursor: pointer;
+            padding: 13px 16px;
+            border-radius: 16px;
+            font-weight: 800;
+            color: #2b1a00;
+            background: linear-gradient(135deg, #ffd166, #ffb703);
+            box-shadow: 0 9px 18px rgba(251, 133, 0, 0.22);
+            transition: 0.18s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-card a {
+            padding: 10px 12px;
+            font-size: 0.9rem;
+            box-shadow: none;
+            background: rgba(255,255,255,0.52);
+        }
+
+        button:hover,
+        .link-button:hover,
+        .nav-card a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 24px rgba(251, 133, 0, 0.28);
+        }
+
+        .secondary {
+            background: linear-gradient(135deg, #fff3b0, #ffd166);
+        }
+
+        .green {
+            background: linear-gradient(135deg, #95d5b2, #2a9d8f);
+            color: #fff;
+        }
+
+        .danger {
+            background: linear-gradient(135deg, #ffadad, #f94144);
+            color: #fff;
+        }
+
+        .grid {
+            display: grid;
+            gap: 22px;
+        }
+
+        .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .wide-left { grid-template-columns: 1.4fr 1fr; }
+        .wide-right { grid-template-columns: 1fr 1.35fr; }
+
+        .section {
+            margin-top: 22px;
+            scroll-margin-top: 24px;
+        }
+
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.75);
+        }
+
+        .section-title {
+            font-size: clamp(1.7rem, 3vw, 2.35rem);
+            font-weight: 900;
+            color: #2b1a00;
+            margin-bottom: 12px;
+            letter-spacing: 0.4px;
+        }
+
+        .panel-title {
+            font-size: 1.35rem;
+            font-weight: 850;
+            margin-bottom: 16px;
+            color: #2b1a00;
+        }
+
+        p {
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .muted {
+            color: #644813;
+            font-weight: 600;
+        }
+
+        .label {
+            font-size: 0.88rem;
+            color: #775a24;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 8px;
+        }
+
+        .value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--dark);
+        }
+
+        .unit {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #7c5b16;
+        }
+
+        .formula {
+            background: #2b1a00;
+            color: #ffe8a3;
+            padding: 15px 17px;
+            border-radius: 16px;
+            font-family: Consolas, "Courier New", monospace;
+            margin-top: 12px;
+            overflow-x: auto;
+            line-height: 1.65;
+            white-space: normal;
+        }
+
+        .formula strong { color: #fff3b0; }
+
+        .mini-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .mini-item {
+            background: rgba(255, 243, 176, 0.6);
+            border: 1px solid rgba(255, 209, 102, 0.7);
+            padding: 13px 14px;
+            border-radius: 16px;
+            font-weight: 650;
+        }
+
+        .stage-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stage-number {
+            position: absolute;
+            right: 18px;
+            top: 12px;
+            font-size: 3rem;
+            font-weight: 950;
+            color: rgba(251, 133, 0, 0.12);
+        }
+
+        .image-frame {
+            width: 100%;
+            min-height: 340px;
+            background: rgba(255, 248, 231, 0.74);
+            border: 2px dashed rgba(119, 90, 36, 0.28);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 12px;
+        }
+
+        .project-img {
+            width: 100%;
+            max-height: 540px;
+            object-fit: contain;
+            border-radius: 16px;
+        }
+
+        .caption {
+            margin-top: 12px;
+            color: #5f4210;
+            font-weight: 650;
+        }
+
+        .controls {
+            display: grid;
+            gap: 15px;
+        }
+
+        .control-row {
+            display: grid;
+            grid-template-columns: 1fr 120px;
+            gap: 14px;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 243, 176, 0.45);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 209, 102, 0.45);
+        }
+
+        .control-row label {
+            font-weight: 800;
+            color: #3a2d1f;
+        }
+
+        .control-row input[type="range"],
+        .control-row select {
+            width: 100%;
+        }
+
+        .control-value {
+            font-weight: 900;
+            color: var(--orange);
+            text-align: right;
+            font-family: Consolas, monospace;
+        }
+
+        input[type="range"] {
+            accent-color: var(--orange);
+        }
+
+        select {
+            padding: 11px;
+            border-radius: 12px;
+            border: 1px solid rgba(119, 90, 36, 0.3);
+            background: #fff8e7;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .metric {
+            background: rgba(255,255,255,0.65);
+            border-radius: 16px;
+            padding: 14px;
+            border: 1px solid rgba(255, 209, 102, 0.42);
+        }
+
+        .metric span:first-child {
+            display: block;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            font-weight: 900;
+            color: #775a24;
+            margin-bottom: 6px;
+        }
+
+        .metric span:last-child {
+            font-size: 1.35rem;
+            font-weight: 950;
+            color: var(--dark);
+            font-family: Consolas, monospace;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-weight: 900;
+            margin-top: 12px;
+            background: #ffedd5;
+            color: #7c2d12;
+        }
+
+        .status-pill.ok { background: #dcfce7; color: #14532d; }
+        .status-pill.error { background: #fee2e2; color: #7f1d1d; }
+        .status-pill.warn { background: #ffedd5; color: #7c2d12; }
+
+        .deadband-line {
+            position: relative;
+            height: 58px;
+            margin-top: 18px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #fee2e2 0 42%, #dcfce7 42% 58%, #fee2e2 58% 100%);
+            border: 1px solid rgba(119, 90, 36, 0.25);
+            overflow: hidden;
+        }
+
+        .deadband-pointer {
+            position: absolute;
+            top: 4px;
+            width: 4px;
+            height: 50px;
+            border-radius: 999px;
+            background: #2b1a00;
+            left: 50%;
+            transition: left 0.2s ease;
+        }
+
+        .deadband-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #68470b;
+            margin-top: 8px;
+        }
+
+        .visual-sim {
+            min-height: 360px;
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255, 224, 102, 0.8), transparent 18%),
+                linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255, 232, 182, 0.45));
+            border: 1px solid rgba(255,255,255,0.8);
+            margin-top: 14px;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .sun-ray {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 220px;
+            height: 5px;
+            background: linear-gradient(90deg, #fb8500, rgba(251,133,0,0));
+            transform-origin: left center;
+            border-radius: 999px;
+            opacity: 0.75;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .sun-dot {
+            position: absolute;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #ffb703;
+            box-shadow: 0 0 45px rgba(251, 133, 0, 0.55), 0 0 95px rgba(255, 183, 3, 0.35);
+            left: 40px;
+            top: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.65rem;
+            font-weight: 950;
+            color: #7c2d12;
+            cursor: grab;
+            z-index: 4;
+            transition: box-shadow 0.15s ease, transform 0.15s ease;
+        }
+
+        .sun-dot:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 0 55px rgba(251, 133, 0, 0.72), 0 0 120px rgba(255, 183, 3, 0.5);
+        }
+
+        .light-help {
+            margin-top: 10px;
+            color: #68470b;
+            font-weight: 800;
+            line-height: 1.45;
+        }
+
+        .panel-rig {
+            position: absolute;
+            left: 50%;
+            top: 54%;
+            width: 90px;
+            height: 190px;
+            margin-left: -45px;
+            margin-top: -95px;
+            transform: rotate(0deg);
+            transition: transform 0.25s ease;
+            transform-origin: center center;
+        }
+
+        .panel-body {
+            width: 90px;
+            height: 190px;
+            background: repeating-linear-gradient(90deg, #1b2a41 0 12px, #27496d 12px 22px);
+            border: 4px solid #2b1a00;
+            border-radius: 12px;
+            box-shadow: 0 18px 25px rgba(0,0,0,0.18);
+        }
+
+        .axis-dot {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fb8500;
+            border: 3px solid #2b1a00;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .arrow-indicator {
+            position: absolute;
+            right: 28px;
+            bottom: 28px;
+            font-size: 2.5rem;
+            font-weight: 950;
+            color: #2b1a00;
+            background: rgba(255,255,255,0.6);
+            padding: 10px 18px;
+            border-radius: 18px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            min-height: 390px;
+        }
+
+        .chart-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .compare-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .compare-item {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 243, 176, 0.55);
+            border: 1px solid rgba(255, 209, 102, 0.55);
+        }
+
+        .compare-item h4 {
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+            color: #2b1a00;
+        }
+
+
+
+        .image-frame.compact {
+            min-height: 260px;
+        }
+
+        .animated-diagram-card {
+            overflow: hidden;
+        }
+
+        .flow-chain {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin: 18px 0;
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(255, 243, 176, 0.48);
+            border: 1px solid rgba(255, 209, 102, 0.55);
+        }
+
+        .flow-node {
+            position: relative;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 2px solid rgba(119, 90, 36, 0.22);
+            font-weight: 900;
+            color: #3a2d1f;
+            transition: 0.25s ease;
+            box-shadow: 0 8px 18px rgba(93, 57, 5, 0.08);
+        }
+
+        .flow-node:not(:last-child)::after {
+            content: "→";
+            position: absolute;
+            right: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7c5b16;
+            font-weight: 950;
+        }
+
+        .flow-node.active {
+            background: linear-gradient(135deg, #95d5b2, #2a9d8f);
+            color: #fff;
+            border-color: #2a9d8f;
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 16px 28px rgba(42, 157, 143, 0.26);
+        }
+
+        .flow-status {
+            margin-top: 12px;
+            font-weight: 850;
+            color: #68470b;
+            line-height: 1.55;
+        }
+
+        .panel-feature-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .panel-feature-list li {
+            margin-left: 20px;
+            line-height: 1.55;
+            font-weight: 700;
+        }
+
+        .metric-grid.panel-metrics {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 28px;
+            color: #68470b;
+            font-weight: 800;
+        }
+
+        @media (max-width: 980px) {
+            body { padding: 16px; }
+            header { padding: 28px; }
+            .hero-content { flex-direction: column; text-align: center; }
+            .hero-logo { max-width: 70%; }
+            .two, .three, .four, .wide-left, .wide-right, .metric-grid, .metric-grid.panel-metrics, .compare-box { grid-template-columns: 1fr; }
+            .control-row { grid-template-columns: 1fr; }
+            .control-value { text-align: left; }
+            .chart-container { min-height: 320px; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header id="inicio">
+        <div class="hero-content">
+            <div class="hero-text">
+                <span class="project-tag">Ingeniería de Control · Modelo matemático · Simulación interactiva</span>
+                <h1>KUARAHY Lab</h1>
+                <p class="subtitle">
+                    Página técnica para explicar el funcionamiento de KUARAHY, su clasificación como sistema de lazo cerrado óptico,
+                    las etapas del circuito analógico, la zona muerta de los comparadores, el modelo linealizado y la respuesta temporal.
+                </p>
+                <div class="top-actions">
+                    <a class="link-button green" href="index.html">Volver al dashboard</a>
+                    <a class="link-button secondary" href="#sim-panel">Ir al simulador</a>
+                    <a class="link-button secondary" href="#transferencia">Ver función de transferencia</a>
+                </div>
+            </div>
+            <img class="hero-logo" src="assets/logo-kuarahy.png" alt="Logo del proyecto KUARAHY">
+        </div>
+    </header>
+
+    <nav class="nav-card" aria-label="Navegación de la página técnica">
+        <a href="#que-es">¿Qué es?</a>
+        <a href="#lazo-cerrado">Lazo cerrado</a>
+        <a href="#etapas">Etapas</a>
+        <a href="#diagramas">Diagramas</a>
+        <a href="#diagrama-animado">Bloques animados</a>
+        <a href="#ldr">Simulador LDR</a>
+        <a href="#comparadores">Comparadores</a>
+        <a href="#sim-panel">Giro del panel</a>
+        <a href="#transferencia">Transferencia</a>
+        <a href="#respuesta">Respuesta temporal</a>
+        <a href="#modelo-c">Modelo C</a>
+        <a href="#comparacion">Real vs lineal</a>
+        <a href="#conclusiones">Conclusiones</a>
+    </nav>
+
+    <section id="que-es" class="section grid two">
+        <div class="card">
+            <h2 class="section-title">¿Qué es KUARAHY?</h2>
+            <p>
+                KUARAHY es un sistema analógico de orientación solar de un eje. Su propósito es detectar hacia qué lado existe
+                mayor incidencia luminosa y accionar un motor DC para orientar una superficie móvil hacia la fuente de luz.
+            </p>
+            <p>
+                El control del movimiento se realiza sin microcontrolador: las decisiones de giro se generan mediante LDR,
+                divisores de voltaje, un amplificador operacional, comparadores LM393, un puente H L298 y un motor DC.
+                El ESP32 se utiliza como módulo de monitoreo IoT para medir voltaje, potencia y ángulo.
+            </p>
+            <div class="formula">
+                Entrada física: luz sobre LDR derecho e izquierdo<br>
+                Salida principal: θ(t), ángulo de giro del panel<br>
+                Acción: orientar la plataforma hacia la mayor iluminación
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="section-title">Idea central</h2>
+            <p>
+                El sistema no busca medir la luz total, sino el desbalance entre los dos sensores. Si el LDR derecho recibe más luz,
+                el circuito interpreta que debe girar hacia un sentido. Si el LDR izquierdo recibe más luz, gira en sentido contrario.
+                Cuando ambos sensores quedan casi equilibrados, el motor se detiene.
+            </p>
+            <div class="mini-list">
+                <div class="mini-item"><strong>e(t) &gt; 0:</strong> mayor iluminación del lado derecho.</div>
+                <div class="mini-item"><strong>e(t) ≈ 0:</strong> equilibrio óptico, motor detenido.</div>
+                <div class="mini-item"><strong>e(t) &lt; 0:</strong> mayor iluminación del lado izquierdo.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="lazo-cerrado" class="section grid wide-left">
+        <div class="card">
+            <h2 class="section-title">¿Por qué es un sistema de lazo cerrado?</h2>
+            <p>
+                El sistema es de lazo cerrado porque la salida mecánica modifica nuevamente la señal de entrada sensorial. Cuando
+                el motor gira el panel, cambia la orientación de los LDR frente a la fuente luminosa. Ese cambio altera los voltajes
+                de los sensores y modifica la decisión del controlador.
+            </p>
+            <p>
+                No es un lazo cerrado de posición con encoder; es un lazo cerrado óptico. La realimentación no es directamente θ(t),
+                sino el desbalance de iluminación medido por los LDR.
+            </p>
+            <div class="formula">
+                θ(t) cambia la orientación del panel → cambia la luz en los LDR → cambian V<sub>R</sub> y V<sub>L</sub> → cambia e(t) → cambia el giro del motor.
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Clasificación técnica</h2>
+            <div class="metric-grid">
+                <div class="metric"><span>Tipo</span><span>lazo cerrado</span></div>
+                <div class="metric"><span>Realimentación</span><span>óptica</span></div>
+                <div class="metric"><span>Control</span><span>ON/OFF</span></div>
+            </div>
+            <p class="caption">
+                El sistema incluye zona muerta para evitar oscilaciones cuando la diferencia de luz es pequeña.
+            </p>
+        </div>
+    </section>
+
+    <section id="etapas" class="section">
+        <div class="card">
+            <h2 class="section-title">Etapas del sistema</h2>
+            <p class="muted">Cada bloque transforma la señal hasta convertir una diferencia de iluminación en movimiento angular.</p>
+        </div>
+        <div class="grid three" style="margin-top: 22px;">
+            <div class="card stage-card"><div class="stage-number">1</div><h3 class="panel-title">Sensado LDR</h3><p>Los LDR convierten la luz incidente en cambios de resistencia. A mayor iluminación, menor resistencia.</p></div>
+            <div class="card stage-card"><div class="stage-number">2</div><h3 class="panel-title">Divisor de voltaje</h3><p>La resistencia variable del LDR se transforma en un voltaje medible: V<sub>R</sub> y V<sub>L</sub>.</p></div>
+            <div class="card stage-card"><div class="stage-number">3</div><h3 class="panel-title">Acondicionamiento U1</h3><p>El operacional genera una señal centrada alrededor de V<sub>ref</sub>: V<sub>c</sub> = V<sub>ref</sub> + V<sub>R</sub> - V<sub>L</sub>.</p></div>
+            <div class="card stage-card"><div class="stage-number">4</div><h3 class="panel-title">Comparadores LM393</h3><p>Comparan V<sub>c</sub> con dos umbrales y deciden giro derecho, giro izquierdo o reposo.</p></div>
+            <div class="card stage-card"><div class="stage-number">5</div><h3 class="panel-title">Puente H L298</h3><p>Aplica polaridad positiva, negativa o nula al motor según la decisión de los comparadores.</p></div>
+            <div class="card stage-card"><div class="stage-number">6</div><h3 class="panel-title">Motor y plataforma</h3><p>El motor convierte el voltaje aplicado en velocidad y posición angular del panel.</p></div>
+        </div>
+    </section>
+
+    <section id="diagramas" class="section grid two">
+        <div class="card">
+            <h2 class="section-title">Diagrama de bloques del sistema</h2>
+            <div class="image-frame">
+                <img class="project-img" src="assets/diagrama-bloques.png" alt="Diagrama de bloques del sistema KUARAHY">
+            </div>
+            <p class="caption">Coloca aquí tu imagen del diagrama de bloques. Puedes cambiar la ruta en el atributo <strong>src</strong>.</p>
+        </div>
+        <div class="card">
+            <h2 class="section-title">Circuito del sistema</h2>
+            <div class="image-frame">
+                <img class="project-img" src="assets/circuito-electrico.png" alt="Circuito eléctrico del sistema KUARAHY">
+            </div>
+            <p class="caption">Coloca aquí la imagen del circuito de Proteus o de la PCB. Puedes cambiar la ruta en <strong>src</strong>.</p>
+        </div>
+    </section>
+
+
+    <section id="diagrama-animado" class="section grid wide-left">
+        <div class="card animated-diagram-card">
+            <h2 class="section-title">Diagrama de bloques animado</h2>
+            <p>
+                Este apartado complementa el diagrama formal del sistema. Al presionar <strong>“Simular recorrido”</strong>,
+                se iluminan las etapas principales para mostrar cómo viaja la señal desde los sensores LDR hasta el panel.
+            </p>
+            <div class="image-frame compact">
+                <img class="project-img" src="assets/diagrama_bloquesV2.png" onerror="this.onerror=null; this.src='assets/diagrama-bloquesV2.png';" alt="Diagrama de bloques V2 del sistema KUARAHY">
+            </div>
+            <p class="caption">
+                La imagen <strong>diagrama_bloquesV2.png</strong> debe estar dentro de la carpeta <strong>assets</strong>. También se acepta el nombre alternativo <strong>diagrama-bloquesV2.png</strong>.
+            </p>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Recorrido de la señal</h2>
+            <p>
+                Cada bloque cambia visualmente cuando la señal activa pasa por esa etapa. Esto ayuda a explicar el sistema de forma clara durante la exposición.
+            </p>
+            <div class="flow-chain" aria-label="Cadena de bloques del sistema">
+                <span class="flow-node">LDR</span>
+                <span class="flow-node">Divisor</span>
+                <span class="flow-node">OpAmp</span>
+                <span class="flow-node">Comparadores</span>
+                <span class="flow-node">L298</span>
+                <span class="flow-node">Motor</span>
+                <span class="flow-node">Panel</span>
+            </div>
+            <button class="green" onclick="animateBlockDiagram()">Simular recorrido</button>
+            <p id="flowStatus" class="flow-status">
+                Estado: esperando simulación. La secuencia representa el camino de la información desde la luz hasta el giro del panel.
+            </p>
+        </div>
+    </section>
+
+    <section id="ldr" class="section grid wide-left">
+        <div class="card">
+            <h2 class="section-title">Simulador interactivo del sensor LDR</h2>
+            <p>
+                Este simulador muestra cómo la iluminación modifica la resistencia del LDR y cómo el divisor de voltaje genera las señales V<sub>R</sub> y V<sub>L</sub>.
+            </p>
+            <div class="controls">
+                <div class="control-row"><label>Iluminación derecha E<sub>R</sub> (lux)<input id="erSlider" type="range" min="1" max="1000" value="350"></label><span id="erVal" class="control-value">350 lux</span></div>
+                <div class="control-row"><label>Iluminación izquierda E<sub>L</sub> (lux)<input id="elSlider" type="range" min="1" max="1000" value="180"></label><span id="elVal" class="control-value">180 lux</span></div>
+                <div class="control-row"><label>Resistencia fija del divisor R<sub>f</sub> (kΩ)<input id="rfSlider" type="range" min="1" max="50" value="10" step="0.5"></label><span id="rfVal" class="control-value">10.0 kΩ</span></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric"><span>V<sub>R</sub></span><span id="vrOut">0.000 V</span></div>
+                <div class="metric"><span>V<sub>L</sub></span><span id="vlOut">0.000 V</span></div>
+                <div class="metric"><span>e = V<sub>R</sub> - V<sub>L</sub></span><span id="eOut">0.000 V</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Modelo usado</h2>
+            <div class="formula">
+                R<sub>LDR</sub>(E) = R<sub>1lux</sub> · E^α<br>
+                R<sub>1lux</sub> = 127410 Ω<br>
+                α = -0.8582<br><br>
+                V<sub>sensor</sub> = 5 · R<sub>f</sub> / (R<sub>LDR</sub> + R<sub>f</sub>)<br>
+                e(t) = V_R - V_L<br>
+                V<sub>c</sub> = V<sub>ref</sub> + e(t)
+            </div>
+            <div class="metric-grid">
+                <div class="metric"><span>R<sub>LDR</sub> derecha</span><span id="rrOut">0 Ω</span></div>
+                <div class="metric"><span>R<sub>LDR</sub> izquierda</span><span id="rlOut">0 Ω</span></div>
+                <div class="metric"><span>V<sub>c</sub></span><span id="vcOut">0.000 V</span></div>
+            </div>
+            <span id="ldrDecision" class="status-pill warn">Calculando...</span>
+        </div>
+    </section>
+
+    <section id="comparadores" class="section grid wide-right">
+        <div class="card">
+            <h2 class="section-title">Simulador de comparadores y zona muerta</h2>
+            <p>
+                Los comparadores LM393 convierten V<sub>c</sub> en una decisión lógica. Si V<sub>c</sub> cae dentro de la zona muerta, el motor se detiene.
+            </p>
+            <div class="controls">
+                <div class="control-row"><label>V<sub>c</sub> manual (V)<input id="vcManual" type="range" min="1.8" max="3.2" value="2.65" step="0.001"></label><span id="vcManualVal" class="control-value">2.650 V</span></div>
+                <div class="control-row"><label>R<sub>a</sub> umbral (kΩ)<input id="raThreshold" type="range" min="1" max="5" value="2.4" step="0.1"></label><span id="raVal" class="control-value">2.4 kΩ</span></div>
+                <div class="control-row"><label>R<sub>b</sub> umbral (kΩ)<input id="rbThreshold" type="range" min="1" max="5" value="2.7" step="0.1"></label><span id="rbVal" class="control-value">2.7 kΩ</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Resultado de decisión</h2>
+            <div class="deadband-line"><div id="deadPointer" class="deadband-pointer"></div></div>
+            <div class="deadband-labels"><span>Giro izquierdo</span><span>Zona muerta</span><span>Giro derecho</span></div>
+            <div class="metric-grid">
+                <div class="metric"><span>V<sub>inf</sub></span><span id="vinfOut">2.353 V</span></div>
+                <div class="metric"><span>V<sub>sup</sub></span><span id="vsupOut">2.647 V</span></div>
+                <div class="metric"><span>h</span><span id="hOut">0.147 V</span></div>
+            </div>
+            <span id="compDecision" class="status-pill warn">Detenido</span>
+            <div class="formula">
+                Si V<sub>c</sub> &gt; V<sub>sup</sub> → giro en un sentido<br>
+                Si V<sub>c</sub> &lt; V<sub>inf</sub> → giro en sentido contrario<br>
+                Si V<sub>inf</sub> ≤ V<sub>c</sub> ≤ V<sub>sup</sub> → motor detenido
+            </div>
+        </div>
+    </section>
+
+    <section id="sim-panel" class="section grid wide-left">
+        <div class="card">
+            <h2 class="section-title">Simulador visual del giro del panel</h2>
+            <p>
+                Este simulador representa el comportamiento ON/OFF del sistema: el panel gira hacia la fuente de luz y se detiene cuando el error angular queda dentro de la zona muerta.
+            </p>
+            <div class="controls">
+                <div class="control-row"><label>Posición de la luz</label><span id="lightPosVal" class="control-value">Arrastra el sol</span></div>
+                <div class="control-row"><label>Ángulo inicial del panel (°)<input id="panelInitial" type="range" min="-80" max="80" value="-45"></label><span id="panelInitialVal" class="control-value">-45°</span></div>
+                <div class="control-row"><label>Zona muerta angular (°)<input id="deadAngle" type="range" min="1" max="20" value="5"></label><span id="deadAngleVal" class="control-value">5°</span></div>
+            </div>
+            <div class="top-actions">
+                <button class="green" onclick="startPanelSimulation()">Simular orientación</button>
+                <button class="secondary" onclick="resetPanelSimulation()">Reiniciar panel</button>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Animación del panel</h2>
+            <div class="visual-sim">
+                <div id="sunDot" class="sun-dot" title="Arrastra la fuente de luz">☀</div>
+                <div id="ray" class="sun-ray"></div>
+                <div id="panelRig" class="panel-rig"><div class="panel-body"></div><div class="axis-dot"></div></div>
+                <div id="arrowIndicator" class="arrow-indicator">⏸</div>
+            </div>
+            <p class="light-help">Arrastra el sol dentro del área de simulación. Su posición define dirección y distancia de la luz respecto al panel.</p>
+            <div class="metric-grid panel-metrics">
+                <div class="metric"><span>θ panel</span><span id="panelAngleNow">-45.0°</span></div>
+                <div class="metric"><span>Error</span><span id="panelErrorNow">80.0°</span></div>
+                <div class="metric"><span>Potencia estimada</span><span id="panelPowerNow">-- mW</span></div>
+                <div class="metric"><span>Estado</span><span id="panelStateNow">listo</span></div>
+            </div>
+            <div class="mini-list" style="margin-top: 16px;">
+                <div class="mini-item"><strong>Panel animado:</strong> esta tarjeta integra panel solar, rayo de luz, flecha de giro, ángulo actual y potencia estimada para una demostración más llamativa en feria.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="transferencia" class="section grid two">
+        <div class="card">
+            <h2 class="section-title">Función de transferencia</h2>
+            <p>
+                Como el sistema real tiene comparadores ON/OFF con zona muerta, la función de transferencia completa es una aproximación linealizada. Para análisis clásico se reemplaza la etapa de decisión por una ganancia equivalente K<sub>c</sub> y se usa el modelo simplificado del motor DC.
+            </p>
+            <div class="formula">
+                G(s) = Θ(s) / E(s) = K / [s(τs + 1)]<br><br>
+                K = K<sub>c</sub> · K<sub>m</sub><br>
+                τ = constante de tiempo mecánica equivalente<br><br>
+                El integrador 1/s aparece porque la posición angular θ(t) se obtiene integrando la velocidad angular ω(t).
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Interpretación de términos</h2>
+            <div class="mini-list">
+                <div class="mini-item"><strong>E(s):</strong> diferencia eléctrica equivalente entre sensores LDR.</div>
+                <div class="mini-item"><strong>K<sub>c</sub>:</strong> ganancia equivalente de comparadores y puente H.</div>
+                <div class="mini-item"><strong>K<sub>m</sub>:</strong> ganancia equivalente del motor DC.</div>
+                <div class="mini-item"><strong>τ:</strong> rapidez de respuesta del motor/plataforma.</div>
+                <div class="mini-item"><strong>θ(t):</strong> posición angular del panel.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="respuesta" class="section grid wide-left">
+        <div class="card">
+            <h2 class="section-title">Respuesta temporal del sistema</h2>
+            <p>
+                Cambia el tipo de entrada y los parámetros del modelo para observar cómo evoluciona θ(t). Para el proyecto, el escalón representa mejor una diferencia de luz que aparece y permanece durante la prueba.
+            </p>
+            <div class="controls">
+                <div class="control-row"><label>Tipo de entrada</label><select id="inputType"><option value="step">Escalón</option><option value="impulse">Impulso</option><option value="ramp">Rampa</option></select></div>
+                <div class="control-row"><label>Ganancia K<input id="kSlider" type="range" min="0.05" max="2.5" value="0.65" step="0.05"></label><span id="kVal" class="control-value">0.65</span></div>
+                <div class="control-row"><label>Constante de tiempo τ (s)<input id="tauSlider" type="range" min="0.2" max="8" value="2.5" step="0.1"></label><span id="tauVal" class="control-value">2.5 s</span></div>
+                <div class="control-row"><label>Amplitud de entrada A<input id="ampSlider" type="range" min="0.1" max="3" value="1" step="0.1"></label><span id="ampVal" class="control-value">1.0</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Gráfica θ(t)</h2>
+            <div class="chart-container"><canvas id="transferChart"></canvas></div>
+        </div>
+    </section>
+
+    <section id="modelo-c" class="section grid wide-right">
+        <div class="card">
+            <h2 class="section-title">Simulador de modelo equivalente K<sub>c</sub>–τ</h2>
+            <p>
+                En este modo se explora cómo la ganancia equivalente K<sub>c</sub> y la constante de tiempo τ afectan la respuesta linealizada. Además, puedes modificar las resistencias del divisor de umbrales para observar cómo cambia la zona muerta.
+            </p>
+            <div class="controls">
+                <div class="control-row"><label>K<sub>c</sub> equivalente<input id="kcSlider" type="range" min="5" max="80" value="26.24" step="0.5"></label><span id="kcVal" class="control-value">26.24</span></div>
+                <div class="control-row"><label>τ modelo C (s)<input id="tauCSlider" type="range" min="0.3" max="8" value="2.4" step="0.1"></label><span id="tauCVal" class="control-value">2.4 s</span></div>
+                <div class="control-row"><label>Error eléctrico aplicado e (V)<input id="errorCSlider" type="range" min="-0.5" max="0.5" value="0.25" step="0.01"></label><span id="errorCVal" class="control-value">0.25 V</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Respuesta del modelo C</h2>
+            <div class="chart-container"><canvas id="modelCChart"></canvas></div>
+            <p class="caption">A mayor K<sub>c</sub>, mayor acción efectiva sobre el motor. A mayor τ, respuesta más lenta.</p>
+        </div>
+    </section>
+
+    <section id="comparacion" class="section grid wide-left">
+        <div class="card">
+            <h2 class="section-title">Comparación: sistema real vs modelo linealizado</h2>
+            <p>
+                El sistema real conmuta por tramos: gira a voltaje casi constante, se apaga en la zona muerta y cambia de polaridad si el error cambia de signo. El modelo linealizado reemplaza esa conmutación por una ganancia continua, útil para graficar y analizar, pero no exacta.
+            </p>
+            <div class="compare-box">
+                <div class="compare-item"><h4>Modelo real</h4><p>ON/OFF con zona muerta. La salida del comparador no es proporcional al error.</p></div>
+                <div class="compare-item"><h4>Modelo linealizado</h4><p>Usa K<sub>c</sub> para aproximar la etapa de decisión y permite usar función de transferencia.</p></div>
+            </div>
+            <p class="caption">La comparación usa los valores actuales del Modelo C: K<sub>c</sub>, τ y error eléctrico aplicado.</p>
+        </div>
+        <div class="card">
+            <h2 class="panel-title">Respuesta comparativa</h2>
+            <div class="chart-container"><canvas id="compareChart"></canvas></div>
+        </div>
+    </section>
+
+    <section id="conclusiones" class="section">
+        <div class="card">
+            <h2 class="section-title">Conclusiones</h2>
+            <div class="mini-list">
+                <div class="mini-item">KUARAHY es un sistema de lazo cerrado óptico porque la orientación del panel modifica la luz recibida por los LDR.</div>
+                <div class="mini-item">Los LDR generan señales V<sub>R</sub> y V<sub>L</sub>; la diferencia e(t) determina el sentido de corrección.</div>
+                <div class="mini-item">Los comparadores LM393 implementan una zona muerta que evita oscilaciones cerca del equilibrio.</div>
+                <div class="mini-item">El modelo real es no lineal, pero puede aproximarse con una función de transferencia linealizada para fines de análisis.</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer">
+        KUARAHY Lab · Modelo matemático, simulación y control · By Vicky, Julio And Mati
+    </div>
+</div>
+
+<script>
+    const VCC = 5;
+    const VREF = 2.5;
+    const R_1LUX = 127410;
+    const ALPHA = -0.8582;
+    const VMOTOR = 7.714;
+    let lastVC = 2.5;
+
+    let transferChart, modelCChart, compareChart;
+    let panelAngle = -45;
+    let panelTimer = null;
+    let sunX = 80;
+    let sunY = 70;
+    let currentLightAngle = 35;
+    let currentLightDistance = 0;
+
+    function $(id) { return document.getElementById(id); }
+    function fmt(n, d = 3) { return Number(n).toFixed(d); }
+
+    function rLdr(lux) {
+        const e = Math.max(1, Number(lux));
+        return R_1LUX * Math.pow(e, ALPHA);
+    }
+
+    function sensorVoltage(lux, rFixedOhm) {
+        const r = rLdr(lux);
+        return VCC * rFixedOhm / (r + rFixedOhm);
+    }
+
+    function updateLdrSimulator() {
+        const er = Number($('erSlider').value);
+        const el = Number($('elSlider').value);
+        const rf = Number($('rfSlider').value) * 1000;
+
+        const rr = rLdr(er);
+        const rl = rLdr(el);
+        const vr = sensorVoltage(er, rf);
+        const vl = sensorVoltage(el, rf);
+        const e = vr - vl;
+        const vc = VREF + e;
+        lastVC = vc;
+
+        $('erVal').textContent = `${er} lux`;
+        $('elVal').textContent = `${el} lux`;
+        $('rfVal').textContent = `${(rf/1000).toFixed(1)} kΩ`;
+        $('vrOut').textContent = `${fmt(vr)} V`;
+        $('vlOut').textContent = `${fmt(vl)} V`;
+        $('eOut').textContent = `${fmt(e)} V`;
+        $('rrOut').textContent = `${Math.round(rr)} Ω`;
+        $('rlOut').textContent = `${Math.round(rl)} Ω`;
+        $('vcOut').textContent = `${fmt(vc)} V`;
+
+        const pill = $('ldrDecision');
+        if (e > 0.03) {
+            pill.textContent = 'Mayor luz derecha → tendencia a girar hacia la derecha';
+            pill.className = 'status-pill ok';
+        } else if (e < -0.03) {
+            pill.textContent = 'Mayor luz izquierda → tendencia a girar hacia la izquierda';
+            pill.className = 'status-pill error';
+        } else {
+            pill.textContent = 'Sensores casi equilibrados';
+            pill.className = 'status-pill warn';
+        }
+    }
+
+    function updateComparators() {
+        const vc = Number($('vcManual').value);
+        const ra = Number($('raThreshold').value);
+        const rb = Number($('rbThreshold').value);
+        const vInf = VCC * ra / (ra + rb);
+        const vSup = VCC * rb / (ra + rb);
+        const low = Math.min(vInf, vSup);
+        const high = Math.max(vInf, vSup);
+        const h = (high - low) / 2;
+        const pct = Math.max(0, Math.min(100, ((vc - 1.8) / (3.2 - 1.8)) * 100));
+
+        $('vcManualVal').textContent = `${fmt(vc)} V`;
+        $('raVal').textContent = `${ra.toFixed(1)} kΩ`;
+        $('rbVal').textContent = `${rb.toFixed(1)} kΩ`;
+        $('vinfOut').textContent = `${fmt(low)} V`;
+        $('vsupOut').textContent = `${fmt(high)} V`;
+        $('hOut').textContent = `${fmt(h)} V`;
+        $('deadPointer').style.left = `${pct}%`;
+
+        const pill = $('compDecision');
+        if (vc > high) {
+            pill.innerHTML = 'V<sub>c</sub> &gt; V<sub>sup</sub> → gira hacia la derecha';
+            pill.className = 'status-pill ok';
+        } else if (vc < low) {
+            pill.innerHTML = 'V<sub>c</sub> &lt; V<sub>inf</sub> → gira hacia la izquierda';
+            pill.className = 'status-pill error';
+        } else {
+            pill.innerHTML = 'Dentro de zona muerta → motor detenido';
+            pill.className = 'status-pill warn';
+        }
+    }
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function getSimGeometry() {
+        const sim = document.querySelector('.visual-sim');
+        const rect = sim.getBoundingClientRect();
+        return {
+            sim,
+            width: rect.width,
+            height: rect.height,
+            panelX: rect.width / 2,
+            panelY: rect.height * 0.54
+        };
+    }
+
+    function computeLightFromSun() {
+        const geo = getSimGeometry();
+        const dx = sunX - geo.panelX;
+        const dy = sunY - geo.panelY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // 0° representa luz ubicada arriba del panel; positivo hacia la derecha y negativo hacia la izquierda.
+        const rawAngle = Math.atan2(dx, -dy) * 180 / Math.PI;
+        currentLightAngle = clamp(rawAngle, -80, 80);
+        currentLightDistance = dist;
+
+        return { ...geo, dx, dy, dist, rawAngle, lightAngle: currentLightAngle };
+    }
+
+    function setSunPosition(x, y) {
+        const geo = getSimGeometry();
+        const radius = 29;
+        sunX = clamp(x, radius, geo.width - radius);
+        sunY = clamp(y, radius, geo.height - radius);
+        updatePanelView();
+    }
+
+    function updateRayAndSun() {
+        const geo = computeLightFromSun();
+        const sun = $('sunDot');
+        const ray = $('ray');
+
+        sun.style.left = `${sunX - 29}px`;
+        sun.style.top = `${sunY - 29}px`;
+
+        const angleToPanel = Math.atan2(geo.panelY - sunY, geo.panelX - sunX) * 180 / Math.PI;
+        ray.style.left = `${sunX}px`;
+        ray.style.top = `${sunY}px`;
+        ray.style.width = `${geo.dist}px`;
+        ray.style.transform = `rotate(${angleToPanel}deg)`;
+
+        const distanceNorm = clamp(1 - geo.dist / Math.hypot(geo.width, geo.height), 0.12, 1);
+        const intensity = Math.round(distanceNorm * 100);
+        $('lightPosVal').textContent = `θ luz: ${currentLightAngle.toFixed(1)}° · distancia: ${Math.round(geo.dist)} px · intensidad ref.: ${intensity}%`;
+    }
+
+    function initSunDrag() {
+        const sun = $('sunDot');
+        const sim = document.querySelector('.visual-sim');
+        let dragging = false;
+
+        function moveFromEvent(event) {
+            const point = event.touches ? event.touches[0] : event;
+            const rect = sim.getBoundingClientRect();
+            setSunPosition(point.clientX - rect.left, point.clientY - rect.top);
+        }
+
+        sun.addEventListener('pointerdown', (event) => {
+            dragging = true;
+            sun.setPointerCapture(event.pointerId);
+            moveFromEvent(event);
+        });
+
+        sun.addEventListener('pointermove', (event) => {
+            if (!dragging) return;
+            moveFromEvent(event);
+        });
+
+        sun.addEventListener('pointerup', () => dragging = false);
+        sun.addEventListener('pointercancel', () => dragging = false);
+
+        sim.addEventListener('click', (event) => {
+            if (event.target === sun) return;
+            const rect = sim.getBoundingClientRect();
+            setSunPosition(event.clientX - rect.left, event.clientY - rect.top);
+        });
+
+        window.addEventListener('resize', () => {
+            const geo = getSimGeometry();
+            setSunPosition(clamp(sunX, 29, geo.width - 29), clamp(sunY, 29, geo.height - 29));
+        });
+    }
+
+    function initializeSunPosition() {
+        const geo = getSimGeometry();
+        sunX = geo.width * 0.24;
+        sunY = geo.height * 0.20;
+        updatePanelView();
+    }
+
+    function updatePanelView() {
+        const init = Number($('panelInitial').value);
+        const dead = Number($('deadAngle').value);
+        const geo = computeLightFromSun();
+
+        $('panelInitialVal').textContent = `${init}°`;
+        $('deadAngleVal').textContent = `${dead}°`;
+        $('panelRig').style.transform = `rotate(${panelAngle}deg)`;
+        updateRayAndSun();
+
+        const error = geo.lightAngle - panelAngle;
+        const alignment = Math.max(0, Math.cos(error * Math.PI / 180));
+        const distanceNorm = clamp(1 - geo.dist / Math.hypot(geo.width, geo.height), 0.12, 1);
+        const estimatedPower = 0.35 + 4.2 * alignment * distanceNorm;
+        $('panelAngleNow').textContent = `${panelAngle.toFixed(1)}°`;
+        $('panelErrorNow').textContent = `${error.toFixed(1)}°`;
+        if ($('panelPowerNow')) {
+            $('panelPowerNow').textContent = `${estimatedPower.toFixed(2)} mW`;
+        }
+    }
+
+    function resetPanelSimulation() {
+        clearInterval(panelTimer);
+        panelTimer = null;
+        panelAngle = Number($('panelInitial').value);
+        $('arrowIndicator').textContent = '⏸';
+        $('panelStateNow').textContent = 'listo';
+        updatePanelView();
+    }
+
+    function startPanelSimulation() {
+        clearInterval(panelTimer);
+        panelAngle = Number($('panelInitial').value);
+
+        panelTimer = setInterval(() => {
+            const dead = Number($('deadAngle').value);
+            const light = computeLightFromSun().lightAngle;
+            const error = light - panelAngle;
+
+            if (Math.abs(error) <= dead) {
+                $('arrowIndicator').textContent = '✓';
+                $('panelStateNow').textContent = 'equilibrio';
+                clearInterval(panelTimer);
+                panelTimer = null;
+                updatePanelView();
+                return;
+            }
+
+            const distanceFactor = clamp(1 - currentLightDistance / 650, 0.35, 1);
+            const step = Math.sign(error) * Math.min(2.4, Math.abs(error) * 0.22) * distanceFactor;
+            panelAngle += step;
+            $('arrowIndicator').textContent = step > 0 ? '↻' : '↺';
+            $('panelStateNow').textContent = step > 0 ? 'giro horario' : 'giro antihorario';
+            updatePanelView();
+        }, 120);
+    }
+
+    let blockAnimationTimer = null;
+
+    function animateBlockDiagram() {
+        const nodes = Array.from(document.querySelectorAll('.flow-node'));
+        const status = $('flowStatus');
+        const descriptions = [
+            'LDR: la luz se convierte en variación de resistencia.',
+            'Divisor: la resistencia del LDR se transforma en voltaje.',
+            'OpAmp: se genera la señal diferencial de control.',
+            'Comparadores: se decide giro, reposo o cambio de sentido.',
+            'L298: el puente H aplica polaridad al motor.',
+            'Motor: el voltaje se convierte en movimiento.',
+            'Panel: la plataforma cambia de orientación y cierra el lazo óptico.'
+        ];
+
+        clearInterval(blockAnimationTimer);
+        nodes.forEach(node => node.classList.remove('active'));
+
+        let index = -1;
+        blockAnimationTimer = setInterval(() => {
+            nodes.forEach(node => node.classList.remove('active'));
+            index++;
+
+            if (index >= nodes.length) {
+                clearInterval(blockAnimationTimer);
+                blockAnimationTimer = null;
+                if (status) {
+                    status.textContent = 'Estado: recorrido completado. La rotación del panel modifica nuevamente la iluminación sobre los LDR.';
+                }
+                return;
+            }
+
+            nodes[index].classList.add('active');
+            if (status) {
+                status.textContent = `Etapa activa: ${descriptions[index]}`;
+            }
+        }, 750);
+    }
+
+    function simulateResponse({K = 0.65, tau = 2.5, amp = 1, type = 'step', tMax = 20, dt = 0.1}) {
+        const labels = [];
+        const theta = [];
+        let w = 0;
+        let th = 0;
+        for (let t = 0; t <= tMax; t += dt) {
+            let u = 0;
+            if (type === 'step') u = amp;
+            if (type === 'impulse') u = t < dt ? amp / dt : 0;
+            if (type === 'ramp') u = amp * t;
+            const dw = (K * u - w) / tau;
+            w += dw * dt;
+            th += w * dt;
+            labels.push(t.toFixed(1));
+            theta.push(th);
+        }
+        return { labels, theta };
+    }
+
+    function makeLineChart(canvasId, label, color) {
+        const ctx = $(canvasId).getContext('2d');
+        return new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: 'rgba(251, 133, 0, 0.16)', borderWidth: 2, tension: 0.35, pointRadius: 0, fill: true }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                devicePixelRatio: window.devicePixelRatio || 2,
+                plugins: { legend: { labels: { color: '#3a2d1f', font: { weight: 'bold' } } } },
+                elements: {
+                    point: { radius: 0, hoverRadius: 0, hitRadius: 0 },
+                    line: { borderWidth: 2 }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Tiempo (s)', color: '#3a2d1f', font: { weight: 'bold' } }, ticks: { color: '#3a2d1f' }, grid: { color: 'rgba(90, 60, 10, 0.12)' } },
+                    y: { title: { display: true, text: 'Ángulo θ(t)', color: '#3a2d1f', font: { weight: 'bold' } }, ticks: { color: '#3a2d1f' }, grid: { color: 'rgba(90, 60, 10, 0.12)' } }
+                }
+            }
+        });
+    }
+
+    function updateTransferChart() {
+        const K = Number($('kSlider').value);
+        const tau = Number($('tauSlider').value);
+        const amp = Number($('ampSlider').value);
+        const type = $('inputType').value;
+        $('kVal').textContent = K.toFixed(2);
+        $('tauVal').textContent = `${tau.toFixed(1)} s`;
+        $('ampVal').textContent = amp.toFixed(1);
+        const res = simulateResponse({K, tau, amp, type});
+        transferChart.data.labels = res.labels;
+        transferChart.data.datasets[0].data = res.theta;
+        transferChart.update();
+    }
+
+    function updateModelC() {
+        const kc = Number($('kcSlider').value);
+        const tau = Number($('tauCSlider').value);
+        const err = Number($('errorCSlider').value);
+        $('kcVal').textContent = kc.toFixed(2);
+        $('tauCVal').textContent = `${tau.toFixed(1)} s`;
+        $('errorCVal').textContent = `${err.toFixed(2)} V`;
+        const K = Math.abs(kc * err) / 10;
+        const res = simulateResponse({K, tau, amp: Math.sign(err || 1), type: 'step'});
+        modelCChart.data.labels = res.labels;
+        modelCChart.data.datasets[0].data = res.theta.map(v => err < 0 ? -Math.abs(v) : Math.abs(v));
+        modelCChart.update();
+
+        if (compareChart) {
+            updateCompareChart();
+        }
+    }
+
+    function updateCompareChart() {
+        if (!compareChart) return;
+
+        const tau = $('tauCSlider') ? Number($('tauCSlider').value) : 2.4;
+        const e = $('errorCSlider') ? Number($('errorCSlider').value) : 0.25;
+        const kc = $('kcSlider') ? Number($('kcSlider').value) : 26.24;
+        const dt = 0.1;
+        const tMax = 18;
+        const labels = [];
+        const real = [];
+        const lin = [];
+        let wr = 0, tr = 0, wl = 0, tl = 0;
+        const h = 0.147;
+
+        for (let t = 0; t <= tMax; t += dt) {
+            const vmReal = Math.abs(e) > h ? Math.sign(e) * VMOTOR : 0;
+            const vmLin = Math.max(-VMOTOR, Math.min(VMOTOR, kc * e));
+
+            wr += ((0.18 * vmReal) - wr) / tau * dt;
+            tr += wr * dt;
+            wl += ((0.18 * vmLin) - wl) / tau * dt;
+            tl += wl * dt;
+
+            labels.push(t.toFixed(1));
+            real.push(tr);
+            lin.push(tl);
+        }
+
+        compareChart.data.labels = labels;
+        compareChart.data.datasets[0].data = real;
+        compareChart.data.datasets[1].data = lin;
+        compareChart.update('none');
+    }
+
+    function initializeCharts() {
+        transferChart = makeLineChart('transferChart', 'Respuesta θ(t)', '#fb8500');
+        modelCChart = makeLineChart('modelCChart', 'Modelo C θ(t)', '#2a9d8f');
+        const ctx = $('compareChart').getContext('2d');
+        compareChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Sistema real ON/OFF', data: [], borderColor: '#d62828', backgroundColor: 'rgba(214, 40, 40, 0.08)', borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 0, pointHitRadius: 0, pointStyle: false },
+                    { label: 'Modelo linealizado', data: [], borderColor: '#2a9d8f', backgroundColor: 'rgba(42, 157, 143, 0.08)', borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 0, pointHitRadius: 0, pointStyle: false }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                devicePixelRatio: window.devicePixelRatio || 2,
+                plugins: { legend: { labels: { color: '#3a2d1f', font: { weight: 'bold' } } } },
+                elements: {
+                    point: { radius: 0, hoverRadius: 0, hitRadius: 0 },
+                    line: { borderWidth: 2 }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Tiempo (s)', color: '#3a2d1f', font: { weight: 'bold' } }, ticks: { color: '#3a2d1f' }, grid: { color: 'rgba(90, 60, 10, 0.12)' } },
+                    y: { title: { display: true, text: 'Ángulo θ(t)', color: '#3a2d1f', font: { weight: 'bold' } }, ticks: { color: '#3a2d1f' }, grid: { color: 'rgba(90, 60, 10, 0.12)' } }
+                }
+            }
+        });
+        updateTransferChart();
+        updateModelC();
+        updateCompareChart();
+    }
+
+    ['erSlider','elSlider','rfSlider'].forEach(id => $(id).addEventListener('input', updateLdrSimulator));
+    ['vcManual','raThreshold','rbThreshold'].forEach(id => $(id).addEventListener('input', updateComparators));
+    ['panelInitial','deadAngle'].forEach(id => $(id).addEventListener('input', () => { if (!panelTimer) { panelAngle = Number($('panelInitial').value); } updatePanelView(); }));
+    ['kSlider','tauSlider','ampSlider','inputType'].forEach(id => $(id).addEventListener('input', updateTransferChart));
+    ['kcSlider','tauCSlider','errorCSlider'].forEach(id => $(id).addEventListener('input', updateModelC));
+
+    updateLdrSimulator();
+    $('vcManual').value = lastVC;
+    updateComparators();
+    initSunDrag();
+    initializeSunPosition();
+    resetPanelSimulation();
+    initializeCharts();
+</script>
+</body>
+</html>
